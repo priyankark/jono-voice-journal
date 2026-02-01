@@ -1,8 +1,10 @@
+// TrendChart - Warm styled trend visualization
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { WeeklyTrend } from '../types';
 import { getWeekLabel } from '../utils/dateHelpers';
 import { getTrendInsights } from '../services/trendAnalyzer';
+import { JonoTheme } from '../constants/theme';
 
 interface TrendChartProps {
   trend: WeeklyTrend;
@@ -44,7 +46,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ trend }) => {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{trend.totalInterviews}</Text>
-          <Text style={styles.statLabel}>Interviews</Text>
+          <Text style={styles.statLabel}>Entries</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{trend.totalMinutesRecorded}</Text>
@@ -105,7 +107,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ trend }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Key Insights</Text>
         {loadingInsights ? (
-          <ActivityIndicator color="#4a4ae8" style={styles.insightsLoader} />
+          <ActivityIndicator color={JonoTheme.colors.accent.primary} style={styles.insightsLoader} />
         ) : (
           insights.map((insight, index) => (
             <View key={index} style={styles.insightRow}>
@@ -134,14 +136,17 @@ export const TrendChart: React.FC<TrendChartProps> = ({ trend }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
     padding: 20,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   weekLabel: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -150,8 +155,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 24,
     paddingVertical: 16,
-    backgroundColor: '#2a2a4e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.accent.muted,
+    borderRadius: JonoTheme.borderRadius.md,
   },
   statItem: {
     alignItems: 'center',
@@ -159,11 +164,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -174,7 +179,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: JonoTheme.colors.text.tertiary,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -190,13 +195,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   positive: {
-    backgroundColor: '#4caf50',
+    backgroundColor: JonoTheme.colors.sentiment.positive,
   },
   neutral: {
-    backgroundColor: '#9e9e9e',
+    backgroundColor: JonoTheme.colors.sentiment.neutral,
   },
   negative: {
-    backgroundColor: '#f44336',
+    backgroundColor: JonoTheme.colors.sentiment.negative,
   },
   sentimentLegend: {
     flexDirection: 'row',
@@ -214,7 +219,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
   },
   themeRow: {
     flexDirection: 'row',
@@ -224,23 +229,23 @@ const styles = StyleSheet.create({
   themeName: {
     flex: 1,
     fontSize: 14,
-    color: '#ccc',
+    color: JonoTheme.colors.text.primary,
   },
   themeBarContainer: {
     flex: 1,
     height: 8,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: JonoTheme.colors.accent.muted,
     borderRadius: 4,
     marginHorizontal: 10,
   },
   themeBar: {
     height: '100%',
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.primary,
     borderRadius: 4,
   },
   themeCount: {
     fontSize: 14,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     width: 30,
     textAlign: 'right',
   },
@@ -252,32 +257,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   insightBullet: {
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
     fontSize: 16,
     marginRight: 8,
   },
   insightText: {
     flex: 1,
     fontSize: 14,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     lineHeight: 20,
   },
   quoteCard: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: JonoTheme.colors.accent.muted,
     padding: 14,
-    borderRadius: 10,
+    borderRadius: JonoTheme.borderRadius.md,
     marginBottom: 10,
   },
   quoteText: {
     fontSize: 14,
-    color: '#ccc',
+    color: JonoTheme.colors.text.primary,
     fontStyle: 'italic',
     lineHeight: 20,
     marginBottom: 8,
   },
   quoteAuthor: {
     fontSize: 12,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     textAlign: 'right',
   },
 });

@@ -1,6 +1,8 @@
+// QuickNotes - Warm styled notes and key moments input
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { KeyMoment } from '../types';
+import { JonoTheme } from '../constants/theme';
 
 interface QuickNotesProps {
   value: string;
@@ -42,8 +44,8 @@ export const QuickNotes: React.FC<QuickNotesProps> = ({
         style={styles.textInput}
         value={value}
         onChangeText={onChangeText}
-        placeholder="Capture your raw thoughts and observations..."
-        placeholderTextColor="#666"
+        placeholder="What's on your mind? Write freely..."
+        placeholderTextColor={JonoTheme.colors.text.tertiary}
         multiline
         textAlignVertical="top"
       />
@@ -56,7 +58,7 @@ export const QuickNotes: React.FC<QuickNotesProps> = ({
             value={momentNote}
             onChangeText={setMomentNote}
             placeholder="Mark a key moment..."
-            placeholderTextColor="#666"
+            placeholderTextColor={JonoTheme.colors.text.tertiary}
           />
           <TouchableOpacity style={styles.momentButton} onPress={handleAddMoment}>
             <Text style={styles.momentButtonText}>+ Add</Text>
@@ -85,19 +87,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: JonoTheme.colors.text.tertiary,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   textInput: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     minHeight: 120,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    lineHeight: 24,
   },
   momentSection: {
     marginTop: 8,
@@ -108,20 +113,22 @@ const styles = StyleSheet.create({
   },
   momentInput: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 14,
     fontSize: 16,
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
   },
   momentButton: {
-    backgroundColor: '#4a4ae8',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.accent.tertiary,
+    borderRadius: JonoTheme.borderRadius.md,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
   momentButtonText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -132,12 +139,12 @@ const styles = StyleSheet.create({
   momentItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
+    borderBottomColor: JonoTheme.colors.border.light,
   },
   momentTimestamp: {
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
     fontWeight: '600',
     fontSize: 14,
     width: 50,
@@ -145,7 +152,8 @@ const styles = StyleSheet.create({
   },
   momentText: {
     flex: 1,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     fontSize: 14,
+    lineHeight: 20,
   },
 });

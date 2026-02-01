@@ -1,7 +1,9 @@
+// ArticlePreview - Warm styled article preview card
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Article } from '../types';
 import { formatDate } from '../utils/dateHelpers';
+import { JonoTheme } from '../constants/theme';
 
 interface ArticlePreviewProps {
   article: Article;
@@ -11,9 +13,9 @@ interface ArticlePreviewProps {
 
 export const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onPress, onImprove }) => {
   const statusColors = {
-    draft: '#ff9800',
-    polished: '#4caf50',
-    published: '#2196f3',
+    draft: JonoTheme.colors.status.draft,
+    polished: JonoTheme.colors.status.polished,
+    published: JonoTheme.colors.status.published,
   };
 
   return (
@@ -57,10 +59,13 @@ export const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onPress
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 18,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   header: {
     flexDirection: 'row',
@@ -71,28 +76,28 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: JonoTheme.borderRadius.full,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     textTransform: 'uppercase',
   },
   date: {
     fontSize: 13,
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 8,
   },
   summary: {
     fontSize: 14,
-    color: '#aaa',
-    lineHeight: 20,
+    color: JonoTheme.colors.text.secondary,
+    lineHeight: 21,
     marginBottom: 12,
   },
   quotesSection: {
@@ -101,21 +106,21 @@ const styles = StyleSheet.create({
   quotesLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   quoteCard: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: JonoTheme.colors.accent.muted,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: JonoTheme.borderRadius.md,
     marginRight: 10,
     width: 200,
   },
   quoteText: {
     fontSize: 13,
-    color: '#ccc',
+    color: JonoTheme.colors.text.primary,
     fontStyle: 'italic',
     lineHeight: 18,
   },
@@ -126,16 +131,16 @@ const styles = StyleSheet.create({
   },
   sourceCount: {
     fontSize: 12,
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
   },
   improveButton: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.secondary,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: JonoTheme.borderRadius.md,
   },
   improveText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontSize: 13,
     fontWeight: '600',
   },

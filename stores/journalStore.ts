@@ -1,12 +1,25 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { JournalEntry, Article, WeeklyTrend } from '../types';
+import * as Crypto from 'expo-crypto';
+import {
+  JournalEntry,
+  Article,
+  WeeklyTrend,
+  Conversation,
+  ConversationMessage,
+  PersonalInsight,
+  SearchResult,
+  SearchFilters,
+} from '../types';
 
 interface JournalState {
   entries: JournalEntry[];
   articles: Article[];
   weeklyTrends: WeeklyTrend[];
+  conversations: Conversation[];
+  activeConversationId: string | null;
+  insights: PersonalInsight[];
 
   // Entry actions
   addEntry: (entry: JournalEntry) => void;
@@ -24,6 +37,25 @@ interface JournalState {
   // Trend actions
   addWeeklyTrend: (trend: WeeklyTrend) => void;
   getLatestTrend: () => WeeklyTrend | undefined;
+
+  // Conversation actions
+  createConversation: () => string;
+  addMessage: (conversationId: string, message: Omit<ConversationMessage, 'id' | 'timestamp'>) => void;
+  endConversation: (conversationId: string, summary?: string) => void;
+  getConversation: (id: string) => Conversation | undefined;
+  getActiveConversation: () => Conversation | undefined;
+  setActiveConversation: (id: string | null) => void;
+  convertConversationToEntry: (conversationId: string, tags?: string[]) => JournalEntry | null;
+  deleteConversation: (id: string) => void;
+
+  // Insight actions
+  addInsight: (insight: PersonalInsight) => void;
+  setInsights: (insights: PersonalInsight[]) => void;
+  clearInsights: () => void;
+
+  // Search actions
+  searchEntries: (query: string, filters?: SearchFilters) => SearchResult[];
+  getAllTags: () => string[];
 }
 
 export const useJournalStore = create<JournalState>()(
@@ -32,7 +64,11 @@ export const useJournalStore = create<JournalState>()(
       entries: [],
       articles: [],
       weeklyTrends: [],
+      conversations: [],
+      activeConversationId: null,
+      insights: [],
 
+      // === Entry Actions ===
       addEntry: (entry) => set((state) => ({
         entries: [entry, ...state.entries]
       })),
@@ -65,6 +101,7 @@ export const useJournalStore = create<JournalState>()(
         });
       },
 
+      // === Article Actions ===
       addArticle: (article) => set((state) => ({
         articles: [article, ...state.articles]
       })),
@@ -79,11 +116,237 @@ export const useJournalStore = create<JournalState>()(
         articles: state.articles.filter((a) => a.id !== id)
       })),
 
+      // === Trend Actions ===
       addWeeklyTrend: (trend) => set((state) => ({
         weeklyTrends: [trend, ...state.weeklyTrends]
       })),
 
       getLatestTrend: () => get().weeklyTrends[0],
+
+      // === Conversation Actions ===
+      createConversation: () => {
+        const id = Crypto.randomUUID();
+        const conversation: Conversation = {
+          id,
+          messages: [],
+          startedAt: new Date(),
+        };
+        set((state) => ({
+          conversations: [conversation, ...state.conversations],
+          activeConversationId: id,
+        }));
+        return id;
+      },
+
+      addMessage: (conversationId, message) => {
+        const fullMessage: ConversationMessage = {
+          ...message,
+          id: Crypto.randomUUID(),
+          timestamp: new Date(),
+        };
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? { ...c, messages: [...c.messages, fullMessage] }
+              : c
+          ),
+        }));
+      },
+
+      endConversation: (conversationId, summary) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? { ...c, endedAt: new Date(), summary }
+              : c
+          ),
+          activeConversationId:
+            state.activeConversationId === conversationId
+              ? null
+              : state.activeConversationId,
+        }));
+      },
+
+      getConversation: (id) => get().conversations.find((c) => c.id === id),
+
+      getActiveConversation: () => {
+        const { activeConversationId, conversations } = get();
+        if (!activeConversationId) return undefined;
+        return conversations.find((c) => c.id === activeConversationId);
+      },
+
+      setActiveConversation: (id) => set({ activeConversationId: id }),
+
+      convertConversationToEntry: (conversationId, tags = []) => {
+        const conversation = get().conversations.find((c) => c.id === conversationId);
+        if (!conversation || conversation.messages.length === 0) return null;
+
+        // Combine all messages into text notes
+        const textNotes = conversation.messages
+          .map((m) => {
+            const prefix = m.role === 'user' ? 'Me' : 'Jono';
+            return `${prefix}: ${m.content}`;
+          })
+          .join('\n\n');
+
+        // Create entry from conversation
+        const entry: JournalEntry = {
+          id: Crypto.randomUUID(),
+          date: new Date(),
+          tags: tags.length > 0 ? tags : conversation.tags || [],
+          textNotes,
+          keyMoments: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          fromConversationId: conversationId,
+        };
+
+        // Add entry and update conversation
+        set((state) => ({
+          entries: [entry, ...state.entries],
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? { ...c, convertedToEntryId: entry.id, endedAt: new Date() }
+              : c
+          ),
+          activeConversationId: null,
+        }));
+
+        return entry;
+      },
+
+      deleteConversation: (id) => set((state) => ({
+        conversations: state.conversations.filter((c) => c.id !== id),
+        activeConversationId:
+          state.activeConversationId === id ? null : state.activeConversationId,
+      })),
+
+      // === Insight Actions ===
+      addInsight: (insight) => set((state) => ({
+        insights: [insight, ...state.insights],
+      })),
+
+      setInsights: (insights) => set({ insights }),
+
+      clearInsights: () => set({ insights: [] }),
+
+      // === Search Actions ===
+      searchEntries: (query, filters) => {
+        const results: SearchResult[] = [];
+        const lowerQuery = query.toLowerCase().trim();
+
+        if (!lowerQuery) return results;
+
+        const { entries, conversations, articles } = get();
+
+        // Search entries
+        if (!filters?.types || filters.types.includes('entry')) {
+          entries.forEach((entry) => {
+            // Check date filter
+            if (filters?.dateRange) {
+              const entryDate = new Date(entry.date);
+              if (entryDate < filters.dateRange.start || entryDate > filters.dateRange.end) {
+                return;
+              }
+            }
+
+            // Check tag filter
+            if (filters?.tags && filters.tags.length > 0) {
+              if (!filters.tags.some((tag) => entry.tags.includes(tag))) {
+                return;
+              }
+            }
+
+            // Search content
+            const searchableContent = [
+              entry.textNotes,
+              entry.voiceRecording?.transcription,
+              entry.interviewee,
+              entry.context,
+              ...entry.keyMoments.map((km) => km.note),
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
+
+            if (searchableContent.includes(lowerQuery)) {
+              const matchIndex = searchableContent.indexOf(lowerQuery);
+              const matchStart = Math.max(0, matchIndex - 30);
+              const matchEnd = Math.min(searchableContent.length, matchIndex + lowerQuery.length + 30);
+              const matchedText = searchableContent.slice(matchStart, matchEnd);
+
+              results.push({
+                type: 'entry',
+                id: entry.id,
+                title: entry.context || entry.interviewee || 'Journal Entry',
+                preview: entry.textNotes?.slice(0, 100) || entry.voiceRecording?.transcription?.slice(0, 100) || '',
+                matchedText: `...${matchedText}...`,
+                score: 1,
+                date: new Date(entry.date),
+                tags: entry.tags,
+              });
+            }
+          });
+        }
+
+        // Search conversations
+        if (!filters?.types || filters.types.includes('conversation')) {
+          conversations.forEach((conv) => {
+            const content = conv.messages.map((m) => m.content).join(' ').toLowerCase();
+            if (content.includes(lowerQuery)) {
+              const matchIndex = content.indexOf(lowerQuery);
+              const matchStart = Math.max(0, matchIndex - 30);
+              const matchEnd = Math.min(content.length, matchIndex + lowerQuery.length + 30);
+
+              results.push({
+                type: 'conversation',
+                id: conv.id,
+                title: conv.summary || 'Conversation',
+                preview: conv.messages[0]?.content.slice(0, 100) || '',
+                matchedText: `...${content.slice(matchStart, matchEnd)}...`,
+                score: 0.8,
+                date: new Date(conv.startedAt),
+                tags: conv.tags,
+              });
+            }
+          });
+        }
+
+        // Search articles
+        if (!filters?.types || filters.types.includes('article')) {
+          articles.forEach((article) => {
+            const content = `${article.title} ${article.content} ${article.summary}`.toLowerCase();
+            if (content.includes(lowerQuery)) {
+              const matchIndex = content.indexOf(lowerQuery);
+              const matchStart = Math.max(0, matchIndex - 30);
+              const matchEnd = Math.min(content.length, matchIndex + lowerQuery.length + 30);
+
+              results.push({
+                type: 'article',
+                id: article.id,
+                title: article.title,
+                preview: article.summary.slice(0, 100),
+                matchedText: `...${content.slice(matchStart, matchEnd)}...`,
+                score: 0.9,
+                date: new Date(article.createdAt),
+              });
+            }
+          });
+        }
+
+        // Sort by score descending
+        return results.sort((a, b) => b.score - a.score);
+      },
+
+      getAllTags: () => {
+        const { entries, conversations } = get();
+        const tagSet = new Set<string>();
+
+        entries.forEach((e) => e.tags.forEach((t) => tagSet.add(t)));
+        conversations.forEach((c) => c.tags?.forEach((t) => tagSet.add(t)));
+
+        return Array.from(tagSet).sort();
+      },
     }),
     {
       name: 'journal-storage',

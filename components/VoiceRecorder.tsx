@@ -1,7 +1,9 @@
+// VoiceRecorder - Warm styled voice recording component
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useVoiceRecording } from '../hooks/useVoiceRecording';
 import { formatDuration } from '../utils/dateHelpers';
+import { JonoTheme } from '../constants/theme';
 
 interface VoiceRecorderProps {
   onRecordingComplete: (uri: string, duration: number) => void;
@@ -91,30 +93,33 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onRecordingComplet
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    padding: 24,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
     marginVertical: 10,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   indicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#444',
-    marginRight: 10,
+    backgroundColor: JonoTheme.colors.border.medium,
+    marginRight: 12,
   },
   indicatorActive: {
-    backgroundColor: '#ff4444',
+    backgroundColor: JonoTheme.colors.recording.active,
   },
   timer: {
     fontSize: 48,
     fontWeight: '300',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     fontVariant: ['tabular-nums'],
   },
   controls: {
@@ -126,45 +131,50 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#ff4444',
+    backgroundColor: JonoTheme.colors.accent.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    ...JonoTheme.shadows.medium,
   },
   recordIcon: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#fff',
+    backgroundColor: JonoTheme.colors.text.inverse,
   },
   stopButton: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#ff4444',
+    backgroundColor: JonoTheme.colors.accent.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    ...JonoTheme.shadows.medium,
   },
   stopIcon: {
     width: 24,
     height: 24,
-    backgroundColor: '#fff',
+    backgroundColor: JonoTheme.colors.text.inverse,
     borderRadius: 4,
   },
   controlButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#333',
+    backgroundColor: JonoTheme.colors.background.secondary,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
   },
   controlText: {
     fontSize: 24,
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
   },
   statusText: {
-    marginTop: 16,
+    marginTop: 20,
     fontSize: 14,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
+    fontWeight: '500',
   },
 });

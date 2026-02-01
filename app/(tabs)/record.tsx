@@ -5,15 +5,16 @@ import * as Crypto from 'expo-crypto';
 import { useJournalStore } from '../../stores/journalStore';
 import { VoiceRecorder } from '../../components/VoiceRecorder';
 import { QuickNotes } from '../../components/QuickNotes';
-import { IntervieweeTag } from '../../components/IntervieweeTag';
+import { ContextTag } from '../../components/ContextTag';
 import { JournalEntry, KeyMoment } from '../../types';
 import { transcribeAudio } from '../../services/transcription';
+import { JonoTheme } from '../../constants/theme';
 
 export default function RecordScreen() {
   const router = useRouter();
   const { addEntry } = useJournalStore();
 
-  const [interviewee, setInterviewee] = useState('');
+  const [context, setContext] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [textNotes, setTextNotes] = useState('');
   const [keyMoments, setKeyMoments] = useState<KeyMoment[]>([]);
@@ -51,7 +52,8 @@ export default function RecordScreen() {
     const entry: JournalEntry = {
       id: Crypto.randomUUID(),
       date: new Date(),
-      interviewee: interviewee.trim() || undefined,
+      context: context.trim() || undefined,
+      interviewee: context.trim() || undefined, // Keep for backwards compatibility
       tags,
       voiceRecording: recordingUri
         ? {
@@ -69,7 +71,7 @@ export default function RecordScreen() {
     addEntry(entry);
 
     // Reset form
-    setInterviewee('');
+    setContext('');
     setTags([]);
     setTextNotes('');
     setKeyMoments([]);
@@ -77,7 +79,7 @@ export default function RecordScreen() {
     setRecordingDuration(0);
     setTranscription(null);
 
-    Alert.alert('Saved!', 'Your entry has been saved.', [
+    Alert.alert('Saved!', 'Your thought has been captured.', [
       { text: 'View Entry', onPress: () => router.push(`/entry/${entry.id}`) },
       { text: 'OK', onPress: () => router.push('/') },
     ]);
@@ -101,7 +103,7 @@ export default function RecordScreen() {
         {/* Transcription Status */}
         {isTranscribing && (
           <View style={styles.transcribingBanner}>
-            <Text style={styles.transcribingText}>Transcribing audio...</Text>
+            <Text style={styles.transcribingText}>Transcribing your voice...</Text>
           </View>
         )}
 
@@ -114,10 +116,10 @@ export default function RecordScreen() {
           </View>
         )}
 
-        {/* Interviewee & Tags */}
-        <IntervieweeTag
-          value={interviewee}
-          onChangeValue={setInterviewee}
+        {/* Context & Tags */}
+        <ContextTag
+          value={context}
+          onChangeValue={setContext}
           tags={tags}
           onChangeTags={setTags}
         />
@@ -149,7 +151,7 @@ export default function RecordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d1a',
+    backgroundColor: JonoTheme.colors.background.primary,
   },
   scrollView: {
     flex: 1,
@@ -159,33 +161,36 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   transcribingBanner: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.secondary,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: JonoTheme.borderRadius.md,
     marginVertical: 10,
     alignItems: 'center',
   },
   transcribingText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontWeight: '500',
   },
   transcriptionPreview: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: JonoTheme.colors.background.card,
     padding: 14,
-    borderRadius: 10,
+    borderRadius: JonoTheme.borderRadius.md,
     marginVertical: 10,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   transcriptionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#888',
+    color: JonoTheme.colors.text.tertiary,
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   transcriptionText: {
     fontSize: 14,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     lineHeight: 20,
   },
   footer: {
@@ -193,17 +198,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   saveButton: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.primary,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: JonoTheme.borderRadius.md,
     alignItems: 'center',
+    ...JonoTheme.shadows.soft,
   },
   saveButtonDisabled: {
-    backgroundColor: '#333',
+    backgroundColor: JonoTheme.colors.border.medium,
     opacity: 0.6,
   },
   saveButtonText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontSize: 18,
     fontWeight: '600',
   },

@@ -1,9 +1,11 @@
+// Articles Screen - Warm styled article list
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useJournalStore } from '../../stores/journalStore';
 import { ArticlePreview } from '../../components/ArticlePreview';
 import { generateArticle, improveArticle } from '../../services/articleGenerator';
+import { JonoTheme } from '../../constants/theme';
 
 export default function ArticlesScreen() {
   const router = useRouter();
@@ -26,7 +28,7 @@ export default function ArticlesScreen() {
 
   const handleGenerateFromAll = async () => {
     if (entries.length === 0) {
-      Alert.alert('No Entries', 'Record some interviews first to generate an article.');
+      Alert.alert('No Entries', 'Capture some thoughts first to generate an article.');
       return;
     }
 
@@ -62,7 +64,13 @@ export default function ArticlesScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4a4ae8" />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={JonoTheme.colors.accent.primary}
+        />
+      }
     >
       {/* Stats */}
       <View style={styles.statsRow}>
@@ -71,11 +79,11 @@ export default function ArticlesScreen() {
           <Text style={styles.statLabel}>Total</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: '#ff9800' }]}>{draftCount}</Text>
+          <Text style={[styles.statValue, { color: JonoTheme.colors.status.draft }]}>{draftCount}</Text>
           <Text style={styles.statLabel}>Drafts</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: '#4caf50' }]}>{polishedCount}</Text>
+          <Text style={[styles.statValue, { color: JonoTheme.colors.status.polished }]}>{polishedCount}</Text>
           <Text style={styles.statLabel}>Polished</Text>
         </View>
       </View>
@@ -85,7 +93,7 @@ export default function ArticlesScreen() {
         <Text style={styles.generateIcon}>✨</Text>
         <View style={styles.generateText}>
           <Text style={styles.generateTitle}>Generate Weekly Article</Text>
-          <Text style={styles.generateSubtitle}>Distill all recent interviews into one article</Text>
+          <Text style={styles.generateSubtitle}>Combine recent entries into one article</Text>
         </View>
       </TouchableOpacity>
 
@@ -98,7 +106,7 @@ export default function ArticlesScreen() {
             <Text style={styles.emptyIcon}>📄</Text>
             <Text style={styles.emptyText}>No articles yet</Text>
             <Text style={styles.emptySubtext}>
-              Record interviews and tap "Distill to Article" to create polished content
+              Capture your thoughts and tap "Transform to Article" to create polished content
             </Text>
           </View>
         ) : (
@@ -107,7 +115,6 @@ export default function ArticlesScreen() {
               key={article.id}
               article={article}
               onPress={() => {
-                // In a full app, navigate to article detail
                 Alert.alert(article.title, article.content.slice(0, 500) + '...');
               }}
               onImprove={article.status === 'draft' ? () => handleImprove(article.id) : undefined}
@@ -122,7 +129,7 @@ export default function ArticlesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d1a',
+    backgroundColor: JonoTheme.colors.background.primary,
   },
   content: {
     padding: 16,
@@ -135,31 +142,34 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     marginTop: 4,
     textTransform: 'uppercase',
   },
   generateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 18,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#4a4ae8',
+    borderWidth: 2,
+    borderColor: JonoTheme.colors.accent.primary,
     borderStyle: 'dashed',
   },
   generateIcon: {
@@ -172,11 +182,11 @@ const styles = StyleSheet.create({
   generateTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
   },
   generateSubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     marginTop: 2,
   },
   section: {
@@ -185,14 +195,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 16,
   },
   emptyState: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
     padding: 32,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
   },
   emptyIcon: {
     fontSize: 48,
@@ -201,12 +213,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: JonoTheme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },

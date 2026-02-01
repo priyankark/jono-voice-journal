@@ -1,23 +1,25 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
+import { JonoTheme } from '../constants/theme';
 
 export default function RootLayout() {
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#0d0d1a',
+            backgroundColor: JonoTheme.colors.background.primary,
           },
-          headerTintColor: '#fff',
+          headerTintColor: JonoTheme.colors.text.primary,
           headerTitleStyle: {
             fontWeight: '600',
           },
           contentStyle: {
-            backgroundColor: '#0d0d1a',
+            backgroundColor: JonoTheme.colors.background.primary,
           },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -36,6 +38,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d1a',
+    backgroundColor: JonoTheme.colors.background.primary,
   },
 });

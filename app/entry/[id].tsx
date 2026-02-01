@@ -1,9 +1,11 @@
+// Entry Detail Screen - Warm styled entry view
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useJournalStore } from '../../stores/journalStore';
 import { formatDateTime, formatDuration } from '../../utils/dateHelpers';
 import { generateArticle } from '../../services/articleGenerator';
+import { JonoTheme } from '../../constants/theme';
 
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,6 +23,8 @@ export default function EntryDetailScreen() {
       </View>
     );
   }
+
+  const displayTitle = entry.context || entry.interviewee;
 
   const handleSaveEdit = () => {
     updateEntry(entry.id, { textNotes: editedNotes });
@@ -46,20 +50,16 @@ export default function EntryDetailScreen() {
   };
 
   const handleDistill = async () => {
-    console.log('[Distill] Button pressed, starting...');
-    Alert.alert('Starting', 'Beginning article generation...');
     try {
-      console.log('[Distill] Calling generateArticle...');
       const article = await generateArticle([entry]);
-      console.log('[Distill] Article generated successfully!');
       addArticle(article);
-      Alert.alert('Article Created', 'Your entry has been distilled into an article.', [
+      Alert.alert('Article Created', 'Your entry has been transformed into an article.', [
         { text: 'View', onPress: () => router.push('/articles') },
         { text: 'OK' },
       ]);
     } catch (error) {
-      console.error('[Distill] Failed to generate article:', error);
-      Alert.alert('Error', `Failed to create article: ${error}`);
+      console.error('Failed to generate article:', error);
+      Alert.alert('Error', 'Failed to create article. Please try again.');
     }
   };
 
@@ -67,8 +67,8 @@ export default function EntryDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
-        {entry.interviewee && (
-          <Text style={styles.interviewee}>{entry.interviewee}</Text>
+        {displayTitle && (
+          <Text style={styles.title}>{displayTitle}</Text>
         )}
         <Text style={styles.date}>{formatDateTime(entry.createdAt)}</Text>
       </View>
@@ -95,7 +95,7 @@ export default function EntryDetailScreen() {
                 <Text style={styles.recordingDuration}>
                   {formatDuration(entry.voiceRecording.duration)}
                 </Text>
-                <Text style={styles.recordingLabel}>Audio recorded</Text>
+                <Text style={styles.recordingLabel}>Audio captured</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.playButton}>
@@ -161,7 +161,7 @@ export default function EntryDetailScreen() {
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.distillButton} onPress={handleDistill}>
-          <Text style={styles.distillButtonText}>✨ Distill to Article</Text>
+          <Text style={styles.distillButtonText}>✨ Transform to Article</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
@@ -175,14 +175,14 @@ export default function EntryDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d1a',
+    backgroundColor: JonoTheme.colors.background.primary,
   },
   content: {
     padding: 16,
     paddingBottom: 100,
   },
   errorText: {
-    color: '#ff4444',
+    color: JonoTheme.colors.sentiment.negative,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 40,
@@ -190,15 +190,15 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 16,
   },
-  interviewee: {
+  title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 4,
   },
   date: {
     fontSize: 14,
-    color: '#666',
+    color: JonoTheme.colors.text.secondary,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tag: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: JonoTheme.borderRadius.full,
   },
   tagText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -227,24 +227,27 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: JonoTheme.colors.text.tertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   editButton: {
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   recordingCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   recordingInfo: {
     flexDirection: 'row',
@@ -257,113 +260,123 @@ const styles = StyleSheet.create({
   recordingDuration: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
   },
   recordingLabel: {
     fontSize: 12,
-    color: '#666',
+    color: JonoTheme.colors.text.secondary,
   },
   playButton: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.primary,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: JonoTheme.borderRadius.md,
   },
   playButtonText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontWeight: '600',
   },
   transcriptionBox: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     marginTop: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   transcriptionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   transcriptionText: {
     fontSize: 15,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     lineHeight: 22,
   },
   notesText: {
     fontSize: 16,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     lineHeight: 24,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
   },
   editInput: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     minHeight: 150,
-    borderWidth: 1,
-    borderColor: '#4a4ae8',
+    borderWidth: 2,
+    borderColor: JonoTheme.colors.accent.primary,
+    lineHeight: 24,
   },
   saveEditButton: {
-    backgroundColor: '#4a4ae8',
-    borderRadius: 8,
+    backgroundColor: JonoTheme.colors.accent.secondary,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 12,
     alignItems: 'center',
     marginTop: 12,
   },
   saveEditButtonText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontWeight: '600',
   },
   momentItem: {
     flexDirection: 'row',
-    backgroundColor: '#1a1a2e',
-    borderRadius: 10,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 12,
     marginBottom: 8,
     gap: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
   },
   momentTimestamp: {
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
     fontWeight: '600',
     fontSize: 14,
     fontVariant: ['tabular-nums'],
   },
   momentNote: {
     flex: 1,
-    color: '#ccc',
+    color: JonoTheme.colors.text.secondary,
     fontSize: 14,
+    lineHeight: 20,
   },
   actions: {
     marginTop: 20,
     gap: 12,
   },
   distillButton: {
-    backgroundColor: '#4a4ae8',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.accent.secondary,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     alignItems: 'center',
+    ...JonoTheme.shadows.soft,
   },
   distillButtonText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
   deleteButton: {
     backgroundColor: 'transparent',
-    borderRadius: 12,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff4444',
+    borderColor: JonoTheme.colors.sentiment.negative,
   },
   deleteButtonText: {
-    color: '#ff4444',
+    color: JonoTheme.colors.sentiment.negative,
     fontSize: 16,
     fontWeight: '600',
   },

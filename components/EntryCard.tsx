@@ -1,7 +1,9 @@
+// EntryCard - Warm styled journal entry card
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { JournalEntry } from '../types';
 import { formatTime, formatDuration } from '../utils/dateHelpers';
+import { JonoTheme } from '../constants/theme';
 
 interface EntryCardProps {
   entry: JournalEntry;
@@ -13,13 +15,14 @@ export const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress, onDistill 
   const hasRecording = !!entry.voiceRecording;
   const hasNotes = !!entry.textNotes;
   const preview = entry.textNotes?.slice(0, 100) || entry.voiceRecording?.transcription?.slice(0, 100) || '';
+  const displayTitle = entry.context || entry.interviewee;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {entry.interviewee && (
-            <Text style={styles.interviewee}>{entry.interviewee}</Text>
+          {displayTitle && (
+            <Text style={styles.title}>{displayTitle}</Text>
           )}
           <Text style={styles.time}>{formatTime(entry.createdAt)}</Text>
         </View>
@@ -64,7 +67,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress, onDistill 
 
       {onDistill && (
         <TouchableOpacity style={styles.distillButton} onPress={onDistill}>
-          <Text style={styles.distillText}>Distill to Article</Text>
+          <Text style={styles.distillText}>Transform to Article</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -73,10 +76,13 @@ export const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress, onDistill 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 18,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   header: {
     flexDirection: 'row',
@@ -87,15 +93,15 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  interviewee: {
+  title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 4,
   },
   time: {
     fontSize: 13,
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
   },
   badges: {
     flexDirection: 'row',
@@ -104,10 +110,10 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a4e',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: JonoTheme.colors.accent.muted,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: JonoTheme.borderRadius.md,
     gap: 4,
   },
   badgeIcon: {
@@ -115,13 +121,13 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    color: '#888',
+    color: JonoTheme.colors.text.secondary,
     fontVariant: ['tabular-nums'],
   },
   preview: {
     fontSize: 14,
-    color: '#aaa',
-    lineHeight: 20,
+    color: JonoTheme.colors.text.secondary,
+    lineHeight: 21,
     marginBottom: 10,
   },
   tags: {
@@ -130,29 +136,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   tag: {
-    backgroundColor: '#4a4ae8',
+    backgroundColor: JonoTheme.colors.accent.primary,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: JonoTheme.borderRadius.full,
   },
   tagText: {
     fontSize: 12,
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontWeight: '500',
   },
   momentCount: {
     fontSize: 12,
-    color: '#666',
+    color: JonoTheme.colors.text.tertiary,
   },
   distillButton: {
     marginTop: 12,
     paddingVertical: 10,
-    backgroundColor: '#4a4ae8',
-    borderRadius: 8,
+    backgroundColor: JonoTheme.colors.accent.secondary,
+    borderRadius: JonoTheme.borderRadius.md,
     alignItems: 'center',
   },
   distillText: {
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     fontWeight: '600',
     fontSize: 14,
   },
