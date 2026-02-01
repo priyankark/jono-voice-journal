@@ -1,30 +1,56 @@
 {
   "expo": {
-    "name": "journal-app",
-    "slug": "journal-app",
+    "name": "Interview Journal",
+    "slug": "interview-journal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "scheme": "interview-journal",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a1a2e"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.journal.interviews",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs microphone access to record interview audio.",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to transcribe your recordings."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1a1a2e"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.journal.interviews"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Interview Journal to access your microphone for recording."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Interview Journal to use the microphone for voice recording.",
+          "speechRecognitionPermission": "Allow Interview Journal to use speech recognition to transcribe your recordings."
+        }
+      ]
+    ]
   }
 }
