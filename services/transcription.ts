@@ -18,7 +18,12 @@ export interface TranscriptionResult {
 
 // Check if Apple Intelligence LLM is available on this device
 export const isAppleIntelligenceAvailable = (): boolean => {
-  return foundationModels.isAvailable();
+  try {
+    return foundationModels.isAvailable();
+  } catch (e) {
+    console.warn('Apple Intelligence availability check failed:', e);
+    return false;
+  }
 };
 
 // Check if speech recognition is available
@@ -90,7 +95,15 @@ export const extractKeyQuotes = async (text: string): Promise<string[]> => {
     return [];
   }
 
-  if (!foundationModels.isAvailable()) {
+  let appleAvailable = false;
+  try {
+    appleAvailable = foundationModels.isAvailable();
+  } catch (e) {
+    console.warn('Apple Intelligence availability check failed in extractKeyQuotes:', e);
+    appleAvailable = false;
+  }
+
+  if (!appleAvailable) {
     // Fallback to simple extraction if AI unavailable
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
     return sentences.slice(0, 5).map(s => s.trim());
@@ -121,7 +134,15 @@ export const analyzeSentiment = async (text: string): Promise<'positive' | 'neut
     return 'neutral';
   }
 
-  if (!foundationModels.isAvailable()) {
+  let appleAvailable = false;
+  try {
+    appleAvailable = foundationModels.isAvailable();
+  } catch (e) {
+    console.warn('Apple Intelligence availability check failed in analyzeSentiment:', e);
+    appleAvailable = false;
+  }
+
+  if (!appleAvailable) {
     return analyzeSentimentFallback(text);
   }
 

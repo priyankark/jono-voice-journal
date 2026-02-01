@@ -58,10 +58,25 @@ export const generateArticle = async (
     .map(e => e.interviewee!)
     .filter((v, i, a) => a.indexOf(v) === i);
 
-  // Extract key quotes using AI
-  const keyQuotes = await extractKeyQuotes(rawContent);
+  // Extract key quotes using AI (safely)
+  let keyQuotes: string[] = [];
+  try {
+    keyQuotes = await extractKeyQuotes(rawContent);
+  } catch (e) {
+    console.warn('Key quote extraction failed, continuing without quotes:', e);
+    keyQuotes = [];
+  }
 
-  if (!foundationModels.isAvailable()) {
+  // Guard against native crashes by safely checking availability
+  let appleAvailable = false;
+  try {
+    appleAvailable = foundationModels.isAvailable();
+  } catch (e) {
+    console.warn('Apple Intelligence availability check failed, using fallback:', e);
+    appleAvailable = false;
+  }
+
+  if (!appleAvailable) {
     // Fallback without AI
     return generateArticleFallback(entries, rawContent, interviewees, keyQuotes, opts);
   }
