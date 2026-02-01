@@ -1,7 +1,7 @@
 import { JournalEntry, Article } from '../types';
 import * as Crypto from 'expo-crypto';
-import { apple, foundationModels } from '@react-native-ai/apple';
-import { generateText, streamText } from 'ai';
+import { apple } from '@react-native-ai/apple';
+import { generateText } from 'ai';
 import { extractKeyQuotes } from './transcription';
 
 export interface ArticleGenerationOptions {
@@ -67,24 +67,17 @@ export const generateArticle = async (
     keyQuotes = [];
   }
 
-  // Guard against native crashes by safely checking availability
-  let appleAvailable = false;
-  try {
-    appleAvailable = foundationModels.isAvailable();
-  } catch (e) {
-    console.warn('Apple Intelligence availability check failed, using fallback:', e);
-    appleAvailable = false;
-  }
-
-  if (!appleAvailable) {
-    // Fallback without AI
+  // Check if Apple Intelligence is available
+  if (!apple.isAvailable()) {
+    console.log('[ArticleGen] Apple Intelligence not available, using fallback');
     return generateArticleFallback(entries, rawContent, interviewees, keyQuotes, opts);
   }
 
   try {
     // Generate title using AI
+    console.log('[ArticleGen] Starting title generation...');
     const { text: title } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Create a compelling, concise article title for the following interview notes. The title should be engaging and capture the main theme. Only return the title, nothing else.
 
 Interviewees: ${interviewees.length > 0 ? interviewees.join(', ') : 'Anonymous'}
@@ -93,10 +86,12 @@ Notes:
 ${rawContent.slice(0, 1000)}`,
       temperature: 0.7,
     });
+    console.log('[ArticleGen] Title generated:', title.slice(0, 50));
 
     // Generate summary using AI
+    console.log('[ArticleGen] Starting summary generation...');
     const { text: summary } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Write a 2-3 sentence executive summary of these interview notes. Focus on the key insights and takeaways.
 
 Notes:
@@ -105,6 +100,7 @@ ${rawContent.slice(0, 2000)}`,
     });
 
     // Generate full article using AI
+    console.log('[ArticleGen] Starting full article generation...');
     const styleGuide = {
       formal: 'Use formal, professional language appropriate for a business report.',
       casual: 'Use conversational, approachable language while maintaining clarity.',
@@ -112,7 +108,7 @@ ${rawContent.slice(0, 2000)}`,
     };
 
     const { text: content } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Transform these interview notes into a well-structured article. ${styleGuide[opts.style]}
 
 ${opts.includeQuotes ? 'Include direct quotes from interviewees where impactful.' : 'Paraphrase rather than using direct quotes.'}
@@ -200,7 +196,7 @@ export const improveArticle = async (
   article: Article,
   action: 'proofread' | 'rewrite' | 'shorten' | 'elaborate' = 'proofread'
 ): Promise<Article> => {
-  if (!foundationModels.isAvailable()) {
+  if (!apple.isAvailable()) {
     return { ...article, status: 'polished' };
   }
 
@@ -213,7 +209,7 @@ export const improveArticle = async (
 
   try {
     const { text: improvedContent } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `${actionPrompts[action]}
 
 Article:
@@ -238,7 +234,7 @@ export const streamArticleGeneration = async (
   onChunk: (text: string) => void,
   options: Partial<ArticleGenerationOptions> = {}
 ): Promise<void> => {
-  if (!foundationModels.isAvailable()) {
+  if (!apple.isAvailable()) {
     throw new Error('Apple Intelligence is not available on this device.');
   }
 
@@ -251,6 +247,7 @@ export const streamArticleGeneration = async (
     journalistic: 'Use engaging journalistic style with a strong narrative flow.',
   };
 
+  const { streamText } = await import('ai');
   const result = streamText({
     model: apple(),
     prompt: `Transform these interview notes into a well-structured article. ${styleGuide[opts.style]}
@@ -264,7 +261,7 @@ ${rawContent}`,
     temperature: 0.6,
   });
 
-  for await (const chunk of result.textStream) {
+  for await (const chunk of (await result).textStream) {
     onChunk(chunk);
   }
 };

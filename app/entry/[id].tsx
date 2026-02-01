@@ -46,16 +46,20 @@ export default function EntryDetailScreen() {
   };
 
   const handleDistill = async () => {
+    console.log('[Distill] Button pressed, starting...');
+    Alert.alert('Starting', 'Beginning article generation...');
     try {
+      console.log('[Distill] Calling generateArticle...');
       const article = await generateArticle([entry]);
+      console.log('[Distill] Article generated successfully!');
       addArticle(article);
       Alert.alert('Article Created', 'Your entry has been distilled into an article.', [
         { text: 'View', onPress: () => router.push('/articles') },
         { text: 'OK' },
       ]);
     } catch (error) {
-      console.error('Failed to generate article:', error);
-      Alert.alert('Error', 'Failed to create article.');
+      console.error('[Distill] Failed to generate article:', error);
+      Alert.alert('Error', `Failed to create article: ${error}`);
     }
   };
 

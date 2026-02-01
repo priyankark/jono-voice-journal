@@ -1,8 +1,8 @@
 import { JournalEntry, WeeklyTrend, ThemeCount, TopQuote } from '../types';
 import * as Crypto from 'expo-crypto';
 import { startOfWeek } from 'date-fns';
-import { apple, foundationModels } from '@react-native-ai/apple';
-import { generateObject, generateText } from 'ai';
+import { apple } from '@react-native-ai/apple';
+import { generateText } from 'ai';
 import { z } from 'zod';
 import { analyzeSentiment, extractKeyQuotes } from './transcription';
 
@@ -22,6 +22,10 @@ const getEntryContent = (entry: JournalEntry): string => {
 const extractThemesWithAI = async (
   entries: JournalEntry[]
 ): Promise<Record<string, { count: number; entryIds: string[] }>> => {
+  if (!apple.isAvailable()) {
+    return extractThemesFallback(entries);
+  }
+
   const allContent = entries.map(e => ({
     id: e.id,
     content: getEntryContent(e),
@@ -30,27 +34,23 @@ const extractThemesWithAI = async (
   const combinedText = allContent.map(e => e.content).join('\n\n---\n\n');
 
   try {
-    const { object: themeAnalysis } = await generateObject({
-      model: apple(),
-      schema: z.object({
-        themes: z.array(z.object({
-          name: z.string().describe('Theme name'),
-          mentions: z.number().describe('Number of times this theme appears'),
-          relevantEntryIndices: z.array(z.number()).describe('Indices of entries containing this theme'),
-        })),
-      }),
+    const { text: themeJson } = await generateText({
+      model: apple() as any,
       prompt: `Analyze the following interview transcripts and identify the main recurring themes. For each theme, count how many times it's mentioned and note which entries (by index, starting at 0) contain that theme.
 
 Focus on themes like: product feedback, user experience, pain points, feature requests, workflow issues, pricing concerns, positive feedback, onboarding challenges, etc.
+
+Return as JSON: {"themes": [{"name": "Theme Name", "mentions": 5, "relevantEntryIndices": [0, 2]}]}
 
 Transcripts:
 ${combinedText}`,
       temperature: 0.3,
     });
 
+    const themeAnalysis = JSON.parse(themeJson);
     const themeMap: Record<string, { count: number; entryIds: string[] }> = {};
 
-    themeAnalysis.themes.forEach(theme => {
+    themeAnalysis.themes.forEach((theme: { name: string; mentions: number; relevantEntryIndices: number[] }) => {
       const entryIds = theme.relevantEntryIndices
         .filter(i => i >= 0 && i < allContent.length)
         .map(i => allContent[i].id);
@@ -109,7 +109,9 @@ export const generateWeeklyTrend = async (entries: JournalEntry[]): Promise<Week
   const weekOf = startOfWeek(new Date(), { weekStartsOn: 1 });
 
   // Analyze themes across all entries
-  const themeMap = foundationModels.isAvailable()
+  const appleAvailable = apple.isAvailable();
+
+  const themeMap = appleAvailable
     ? await extractThemesWithAI(entries)
     : extractThemesFallback(entries);
 
@@ -179,13 +181,13 @@ export const generateWeeklyTrend = async (entries: JournalEntry[]): Promise<Week
 
 // Get AI-generated trend insights
 export const getTrendInsights = async (trend: WeeklyTrend): Promise<string[]> => {
-  if (!foundationModels.isAvailable()) {
+  if (!apple.isAvailable()) {
     return getTrendInsightsFallback(trend);
   }
 
   try {
     const { text: insightsJson } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Based on the following weekly interview analysis data, generate 4-5 actionable insights. Return them as a JSON array of strings.
 
 Data:

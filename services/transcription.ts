@@ -1,5 +1,5 @@
 // Transcription service using expo-speech-recognition and Apple Intelligence
-import { apple, foundationModels } from '@react-native-ai/apple';
+import { apple } from '@react-native-ai/apple';
 import { generateText } from 'ai';
 import {
   ExpoSpeechRecognitionModule,
@@ -18,12 +18,7 @@ export interface TranscriptionResult {
 
 // Check if Apple Intelligence LLM is available on this device
 export const isAppleIntelligenceAvailable = (): boolean => {
-  try {
-    return foundationModels.isAvailable();
-  } catch (e) {
-    console.warn('Apple Intelligence availability check failed:', e);
-    return false;
-  }
+  return apple.isAvailable();
 };
 
 // Check if speech recognition is available
@@ -95,15 +90,7 @@ export const extractKeyQuotes = async (text: string): Promise<string[]> => {
     return [];
   }
 
-  let appleAvailable = false;
-  try {
-    appleAvailable = foundationModels.isAvailable();
-  } catch (e) {
-    console.warn('Apple Intelligence availability check failed in extractKeyQuotes:', e);
-    appleAvailable = false;
-  }
-
-  if (!appleAvailable) {
+  if (!apple.isAvailable()) {
     // Fallback to simple extraction if AI unavailable
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
     return sentences.slice(0, 5).map(s => s.trim());
@@ -111,7 +98,7 @@ export const extractKeyQuotes = async (text: string): Promise<string[]> => {
 
   try {
     const { text: quotesJson } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Extract the 5 most impactful and quotable statements from the following interview transcript. Return them as a JSON array of strings. Only return the JSON array, nothing else.
 
 Transcript:
@@ -134,21 +121,13 @@ export const analyzeSentiment = async (text: string): Promise<'positive' | 'neut
     return 'neutral';
   }
 
-  let appleAvailable = false;
-  try {
-    appleAvailable = foundationModels.isAvailable();
-  } catch (e) {
-    console.warn('Apple Intelligence availability check failed in analyzeSentiment:', e);
-    appleAvailable = false;
-  }
-
-  if (!appleAvailable) {
+  if (!apple.isAvailable()) {
     return analyzeSentimentFallback(text);
   }
 
   try {
     const { text: sentiment } = await generateText({
-      model: apple(),
+      model: apple() as any,
       prompt: `Analyze the overall sentiment of the following text. Respond with exactly one word: "positive", "neutral", or "negative".
 
 Text:
