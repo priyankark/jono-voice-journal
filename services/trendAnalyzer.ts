@@ -5,6 +5,7 @@ import { apple } from '@react-native-ai/apple';
 import { generateText } from 'ai';
 import { z } from 'zod';
 import { analyzeSentiment, extractKeyQuotes } from './transcription';
+import { safeParseJSON } from './jsonUtils';
 
 // Get all content from an entry
 const getEntryContent = (entry: JournalEntry): string => {
@@ -77,10 +78,10 @@ Return as JSON: {"themes": [{"name": "Theme Name", "mentions": 5, "relevantEntry
 Journal Entries:
 ${combinedText}`,
       temperature: 0.5,
-      maxTokens: 1500,
+      maxOutputTokens: 1500,
     } as any);
 
-    const themeAnalysis = JSON.parse(themeJson);
+    const themeAnalysis = safeParseJSON(themeJson, { themes: [] });
     const themeMap: Record<string, { count: number; entryIds: string[] }> = {};
 
     themeAnalysis.themes.forEach((theme: { name: string; mentions: number; relevantEntryIndices: number[] }) => {
@@ -224,16 +225,16 @@ Return as JSON:
 Journal Entries:
 ${combinedText}`,
       temperature: 0.3,
-      maxTokens: 1000,
+      maxOutputTokens: 1000,
     } as any);
 
-    const analysis = JSON.parse(moodJson);
+    const analysis = safeParseJSON(moodJson, { summary: { positive: 0, neutral: 0, negative: 0, energyLevel: 'moderate', dominantMood: 'balanced' } });
     return {
-      positive: analysis.summary.positive || 0,
-      neutral: analysis.summary.neutral || 0,
-      negative: analysis.summary.negative || 0,
-      energyLevel: analysis.summary.energyLevel || 'moderate',
-      dominantMood: analysis.summary.dominantMood || 'balanced',
+      positive: analysis.summary?.positive || 0,
+      neutral: analysis.summary?.neutral || 0,
+      negative: analysis.summary?.negative || 0,
+      energyLevel: analysis.summary?.energyLevel || 'moderate',
+      dominantMood: analysis.summary?.dominantMood || 'balanced',
     };
   } catch (error) {
     console.error('AI mood analysis failed, using fallback:', error);
@@ -373,11 +374,11 @@ ${weekOverWeekContext}
 
 Return as a JSON array of 4-5 insight strings. Each insight should be 1-2 sentences and feel personally relevant.`,
       temperature: 0.4,
-      maxTokens: 800,
+      maxOutputTokens: 800,
     } as any);
 
-    const insights = JSON.parse(insightsJson);
-    return Array.isArray(insights) ? insights : getTrendInsightsFallback(trend);
+    const insights = safeParseJSON<string[]>(insightsJson, []);
+    return Array.isArray(insights) && insights.length > 0 ? insights : getTrendInsightsFallback(trend);
   } catch {
     return getTrendInsightsFallback(trend);
   }

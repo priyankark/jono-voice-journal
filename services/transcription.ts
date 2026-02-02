@@ -6,6 +6,7 @@ import {
   useSpeechRecognitionEvent,
 } from 'expo-speech-recognition';
 import { Platform } from 'react-native';
+import { safeParseJSON } from './jsonUtils';
 
 export interface TranscriptionResult {
   text: string;
@@ -106,7 +107,7 @@ ${text}`,
       temperature: 0.3,
     });
 
-    const quotes = JSON.parse(quotesJson);
+    const quotes = safeParseJSON<string[]>(quotesJson, []);
     return Array.isArray(quotes) ? quotes.slice(0, 5) : [];
   } catch {
     // Fallback to simple extraction

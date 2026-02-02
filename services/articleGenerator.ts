@@ -595,7 +595,7 @@ export const generateArticle = async (
       system: getContentSystemPrompt(),
       prompt: contentPrompt,
       temperature: contentTemperature,
-      maxTokens: opts.maxLength ? opts.maxLength * 2 : 4000,
+      maxOutputTokens: opts.maxLength ? opts.maxLength * 2 : 4000,
     } as any);
 
     // Determine content type
@@ -833,7 +833,7 @@ Return the expanded article.`,
       system: editingSystemPrompt,
       prompt: actionPrompts[action],
       temperature: actionTemperatures[action],
-      maxTokens: 4000,
+      maxOutputTokens: 4000,
     } as any);
 
     return {

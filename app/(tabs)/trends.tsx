@@ -5,6 +5,7 @@ import { TrendChart } from '../../components/TrendChart';
 import { generateWeeklyTrend } from '../../services/trendAnalyzer';
 import { getWeekRange, getWeekLabel } from '../../utils/dateHelpers';
 import { WeeklyTrend } from '../../types';
+import { JonoTheme } from '../../constants/theme';
 
 export default function TrendsScreen() {
   const { entries, weeklyTrends, addWeeklyTrend } = useJournalStore();
@@ -12,17 +13,18 @@ export default function TrendsScreen() {
   const [currentTrend, setCurrentTrend] = useState<WeeklyTrend | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Get entries from this week
-  const thisWeek = getWeekRange(new Date());
+  // Get entries from this week - memoize the week range to prevent infinite loops
+  const thisWeek = useMemo(() => getWeekRange(new Date()), []);
   const thisWeekEntries = useMemo(() => {
     return entries.filter(e => {
       const entryDate = new Date(e.date);
       return entryDate >= thisWeek.start && entryDate <= thisWeek.end;
     });
-  }, [entries, thisWeek.start, thisWeek.end]);
+  }, [entries, thisWeek]);
 
   // Generate current week trend when entries change
   useEffect(() => {
+    let cancelled = false;
     const generateTrend = async () => {
       if (thisWeekEntries.length === 0) {
         setCurrentTrend(null);
@@ -30,13 +32,18 @@ export default function TrendsScreen() {
       }
       try {
         const trend = await generateWeeklyTrend(thisWeekEntries);
-        setCurrentTrend(trend);
+        if (!cancelled) {
+          setCurrentTrend(trend);
+        }
       } catch (error) {
-        console.error('Failed to generate trend:', error);
+        if (!cancelled) {
+          console.error('Failed to generate trend:', error);
+        }
       }
     };
     generateTrend();
-  }, [thisWeekEntries]);
+    return () => { cancelled = true; };
+  }, [thisWeekEntries.length]);
 
   const handleGenerateTrend = async () => {
     if (thisWeekEntries.length === 0) {
@@ -74,7 +81,7 @@ export default function TrendsScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4a4ae8" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={JonoTheme.colors.accent.primary} />}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -113,7 +120,7 @@ export default function TrendsScreen() {
         disabled={isGenerating}
       >
         {isGenerating ? (
-          <ActivityIndicator color="#4a4ae8" />
+          <ActivityIndicator color={JonoTheme.colors.accent.primary} />
         ) : (
           <Text style={styles.generateText}>Generate This Week's Report</Text>
         )}
@@ -175,42 +182,43 @@ export default function TrendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d0d1a',
+    backgroundColor: JonoTheme.colors.background.primary,
   },
   content: {
     padding: 16,
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: JonoTheme.colors.text.secondary,
   },
   summaryCard: {
-    backgroundColor: '#4a4ae8',
-    borderRadius: 16,
+    backgroundColor: JonoTheme.colors.accent.primary,
+    borderRadius: JonoTheme.borderRadius.lg,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 24,
+    ...JonoTheme.shadows.medium,
   },
   summaryLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.8)',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   summaryPeriod: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
     marginTop: 4,
     marginBottom: 16,
   },
@@ -222,47 +230,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#fff',
+    color: JonoTheme.colors.text.inverse,
   },
   summaryStatLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   generateButton: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#4a4ae8',
+    justifyContent: 'center',
+    marginBottom: 28,
+    borderWidth: 1.5,
+    borderColor: JonoTheme.colors.accent.primary,
+    minHeight: 52,
   },
   generateButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   generateText: {
-    color: '#4a4ae8',
+    color: JonoTheme.colors.accent.primary,
     fontSize: 16,
     fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
     marginBottom: 16,
   },
   pastTrendCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.md,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   pastTrendHeader: {
     flexDirection: 'row',
@@ -273,49 +288,54 @@ const styles = StyleSheet.create({
   pastTrendDate: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: JonoTheme.colors.text.primary,
   },
   pastTrendBadge: {
     fontSize: 12,
-    color: '#4a4ae8',
-    fontWeight: '500',
+    color: JonoTheme.colors.accent.primary,
+    fontWeight: '600',
   },
   pastTrendTheme: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderTopWidth: 1,
-    borderTopColor: '#2a2a4e',
+    borderTopColor: JonoTheme.colors.border.light,
   },
   pastTrendThemeName: {
     fontSize: 14,
-    color: '#ccc',
+    color: JonoTheme.colors.text.primary,
   },
   pastTrendThemeCount: {
     fontSize: 14,
-    color: '#888',
+    color: JonoTheme.colors.text.tertiary,
+    fontWeight: '600',
   },
   emptyState: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 32,
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 40,
     alignItems: 'center',
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
   },
   emptyIcon: {
     fontSize: 48,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
+    color: JonoTheme.colors.text.primary,
+    marginBottom: 6,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: JonoTheme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingHorizontal: 16,
   },
 });

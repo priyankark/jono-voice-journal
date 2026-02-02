@@ -1,4 +1,4 @@
-// useAssistant Hook - Manages assistant state and voice interaction
+// useAssistant Hook - Simple assistant state and voice interaction
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ExpoSpeechRecognitionModule,
@@ -38,6 +38,8 @@ export const useAssistant = (): UseAssistantReturn => {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const isProcessingRef = useRef(false);
+  const lastFinalTextRef = useRef<string | null>(null);
+  const lastFinalAtRef = useRef<number>(0);
 
   const {
     createConversation,
@@ -56,10 +58,28 @@ export const useAssistant = (): UseAssistantReturn => {
     if (event.results?.[0]) {
       setLiveTranscript(event.results[0].transcript);
 
-      // If final result, process the user's message
       if (event.isFinal && !isProcessingRef.current) {
         const finalText = event.results[0].transcript;
+        const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+        const now = Date.now();
+        const normalized = normalize(finalText);
+
+        // Skip duplicates
+        if (lastFinalTextRef.current && normalize(lastFinalTextRef.current) === normalized) {
+          return;
+        }
+
+        if (
+          lastFinalTextRef.current &&
+          normalize(lastFinalTextRef.current) === normalized &&
+          now - lastFinalAtRef.current < 2000
+        ) {
+          return;
+        }
+
         if (finalText.trim()) {
+          lastFinalTextRef.current = finalText;
+          lastFinalAtRef.current = now;
           processUserMessage(finalText.trim());
         }
       }
@@ -106,7 +126,7 @@ export const useAssistant = (): UseAssistantReturn => {
         throw new Error('Conversation not found');
       }
 
-      // Generate AI follow-up
+      // Generate AI response
       const response = await generateFollowUp(updatedConv);
 
       // Add assistant message
@@ -132,19 +152,16 @@ export const useAssistant = (): UseAssistantReturn => {
   // Start listening for voice input
   const startListening = useCallback(async () => {
     try {
-      // Stop any ongoing speech
       if (isSpeakingNow()) {
         stopSpeaking();
       }
 
-      // Check permissions
       const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!granted) {
         setError('Microphone permission required');
         return;
       }
 
-      // Ensure we have an active conversation
       if (!activeConversationId) {
         createConversation();
       }
@@ -165,30 +182,23 @@ export const useAssistant = (): UseAssistantReturn => {
     }
   }, [activeConversationId, createConversation]);
 
-  // Stop listening and process
   const stopListening = useCallback(() => {
     ExpoSpeechRecognitionModule.stop();
-    // The 'end' event will be triggered
   }, []);
 
-  // Cancel listening without processing
   const cancelListening = useCallback(() => {
     ExpoSpeechRecognitionModule.stop();
     setLiveTranscript('');
     setState('idle');
   }, []);
 
-  // Start a new conversation
   const startNewConversation = useCallback(async () => {
-    // End current conversation if exists
     if (activeConversationId) {
       endConv(activeConversationId);
     }
 
-    // Create new conversation
     const newConvId = createConversation();
 
-    // Get greeting and speak it
     const greeting = getGreeting();
     addMessage(newConvId, {
       role: 'assistant',
@@ -199,9 +209,11 @@ export const useAssistant = (): UseAssistantReturn => {
     await speak(greeting, () => {
       setState('idle');
     });
+
+    lastFinalTextRef.current = null;
+    lastFinalAtRef.current = 0;
   }, [activeConversationId, createConversation, addMessage, endConv]);
 
-  // Save conversation as journal entry
   const saveAsEntry = useCallback(async () => {
     if (!activeConversationId || !canSaveAsEntry) return;
 
@@ -209,10 +221,7 @@ export const useAssistant = (): UseAssistantReturn => {
       const conv = useJournalStore.getState().getConversation(activeConversationId);
       if (!conv) return;
 
-      // Synthesize entry data
       const { tags } = await synthesizeToEntry(conv);
-
-      // Convert to entry
       const entry = convertConversationToEntry(activeConversationId, tags);
 
       if (entry) {
@@ -224,7 +233,6 @@ export const useAssistant = (): UseAssistantReturn => {
     }
   }, [activeConversationId, canSaveAsEntry, convertConversationToEntry]);
 
-  // End conversation without saving
   const endConversation = useCallback(() => {
     if (activeConversationId) {
       endConv(activeConversationId);
@@ -232,9 +240,10 @@ export const useAssistant = (): UseAssistantReturn => {
     setState('idle');
     setLiveTranscript('');
     stopSpeaking();
+    lastFinalTextRef.current = null;
+    lastFinalAtRef.current = 0;
   }, [activeConversationId, endConv]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopSpeaking();

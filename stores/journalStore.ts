@@ -8,10 +8,16 @@ import {
   WeeklyTrend,
   Conversation,
   ConversationMessage,
+  ConversationCompact,
   PersonalInsight,
   SearchResult,
   SearchFilters,
+  InterventionLibrary,
+  Intervention,
+  InterventionFeedback,
+  InterventionPattern,
 } from '../types';
+import { extractPatterns, calculateEffectiveness } from '../services/interventionLibraryService';
 
 interface JournalState {
   entries: JournalEntry[];
@@ -20,6 +26,7 @@ interface JournalState {
   conversations: Conversation[];
   activeConversationId: string | null;
   insights: PersonalInsight[];
+  interventionLibrary: InterventionLibrary;
 
   // Entry actions
   addEntry: (entry: JournalEntry) => void;
@@ -47,11 +54,20 @@ interface JournalState {
   setActiveConversation: (id: string | null) => void;
   convertConversationToEntry: (conversationId: string, tags?: string[]) => JournalEntry | null;
   deleteConversation: (id: string) => void;
+  updateConversationCompacted: (conversationId: string, compacted: ConversationCompact) => void;
+  updateConversationThemes: (conversationId: string, themes: string[]) => void;
 
   // Insight actions
   addInsight: (insight: PersonalInsight) => void;
   setInsights: (insights: PersonalInsight[]) => void;
   clearInsights: () => void;
+
+  // Intervention library actions
+  trackIntervention: (intervention: Omit<Intervention, 'id'>) => void;
+  addInterventionFeedback: (interventionId: string, feedback: Partial<InterventionFeedback>) => void;
+  getInterventionPatterns: () => InterventionPattern[];
+  updateInterventionPatterns: () => Promise<void>;
+  getInterventionLibrary: () => InterventionLibrary;
 
   // Search actions
   searchEntries: (query: string, filters?: SearchFilters) => SearchResult[];
@@ -67,6 +83,14 @@ export const useJournalStore = create<JournalState>()(
       conversations: [],
       activeConversationId: null,
       insights: [],
+      interventionLibrary: {
+        interventions: [],
+        patterns: [],
+        userPreferences: {
+          preferredApproaches: [],
+          avoidedApproaches: [],
+        },
+      },
 
       // === Entry Actions ===
       addEntry: (entry) => set((state) => ({
@@ -184,7 +208,7 @@ export const useJournalStore = create<JournalState>()(
         // Combine all messages into text notes
         const textNotes = conversation.messages
           .map((m) => {
-            const prefix = m.role === 'user' ? 'Me' : 'Jono';
+            const prefix = m.role === 'user' ? 'Me' : 'Assistant';
             return `${prefix}: ${m.content}`;
           })
           .join('\n\n');
@@ -221,6 +245,22 @@ export const useJournalStore = create<JournalState>()(
           state.activeConversationId === id ? null : state.activeConversationId,
       })),
 
+      updateConversationCompacted: (conversationId, compacted) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId ? { ...c, compacted } : c
+          ),
+        }));
+      },
+
+      updateConversationThemes: (conversationId, themes) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId ? { ...c, discussedThemes: themes } : c
+          ),
+        }));
+      },
+
       // === Insight Actions ===
       addInsight: (insight) => set((state) => ({
         insights: [insight, ...state.insights],
@@ -229,6 +269,76 @@ export const useJournalStore = create<JournalState>()(
       setInsights: (insights) => set({ insights }),
 
       clearInsights: () => set({ insights: [] }),
+
+      // === Intervention Library Actions ===
+      trackIntervention: (intervention) => {
+        const fullIntervention: Intervention = {
+          ...intervention,
+          id: Crypto.randomUUID(),
+        };
+
+        set((state) => ({
+          interventionLibrary: {
+            ...state.interventionLibrary,
+            interventions: [fullIntervention, ...state.interventionLibrary.interventions].slice(0, 500), // Keep last 500
+          },
+        }));
+      },
+
+      addInterventionFeedback: (interventionId, feedback) => {
+        set((state) => {
+          const updatedInterventions = state.interventionLibrary.interventions.map((intervention) => {
+            if (intervention.id === interventionId) {
+              const completeFeedback: InterventionFeedback = {
+                timestamp: feedback.timestamp || new Date(),
+                type: feedback.type || 'immediate',
+                userEngagement: feedback.userEngagement || 'low',
+                emotionalShift: feedback.emotionalShift || 'neutral',
+                insightReported: feedback.insightReported || false,
+                actionTaken: feedback.actionTaken || false,
+                userRating: feedback.userRating,
+              };
+
+              // Calculate effectiveness score
+              const effectiveness = calculateEffectiveness(completeFeedback);
+
+              return {
+                ...intervention,
+                feedback: completeFeedback,
+                effectiveness,
+              };
+            }
+            return intervention;
+          });
+
+          return {
+            interventionLibrary: {
+              ...state.interventionLibrary,
+              interventions: updatedInterventions,
+            },
+          };
+        });
+      },
+
+      getInterventionPatterns: () => {
+        return get().interventionLibrary.patterns;
+      },
+
+      updateInterventionPatterns: async () => {
+        const library = get().interventionLibrary;
+        const newPatterns = extractPatterns(library.interventions);
+
+        set((state) => ({
+          interventionLibrary: {
+            ...state.interventionLibrary,
+            patterns: newPatterns,
+          },
+        }));
+      },
+
+      getInterventionLibrary: () => {
+        return get().interventionLibrary;
+      },
 
       // === Search Actions ===
       searchEntries: (query, filters) => {

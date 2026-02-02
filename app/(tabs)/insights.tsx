@@ -18,20 +18,40 @@ import {
 } from '../../services/insightsService';
 import { JonoTheme } from '../../constants/theme';
 import { PersonalInsight, ReflectionPrompt } from '../../types';
+import { AudioOverviewPlayer } from '../../components/AudioOverviewPlayer';
+import { useAudioOverview } from '../../hooks/useAudioOverview';
 
 export default function InsightsScreen() {
   const router = useRouter();
-  const { entries, conversations, insights, setInsights } = useJournalStore();
+  const { entries, conversations, insights, setInsights, getInterventionPatterns } = useJournalStore();
 
   const [refreshing, setRefreshing] = useState(false);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [reflectionPrompts, setReflectionPrompts] = useState<ReflectionPrompt[]>([]);
+
+  // Audio overview hook
+  const {
+    isGenerating: audioGenerating,
+    isPlaying: audioPlaying,
+    error: audioError,
+    play: playAudio,
+    stop: stopAudio,
+  } = useAudioOverview();
 
   // Calculate stats
   const stats = useMemo(
     () => calculateJournalStats(entries, conversations),
     [entries, conversations]
   );
+
+  // Get top intervention patterns
+  const topPatterns = useMemo(() => {
+    const patterns = getInterventionPatterns();
+    return patterns
+      .filter(p => p.useCount >= 3) // Only show patterns with at least 3 uses
+      .sort((a, b) => b.averageEffectiveness - a.averageEffectiveness)
+      .slice(0, 3);
+  }, [getInterventionPatterns]);
 
   // Load reflection prompts on mount
   useEffect(() => {
@@ -66,6 +86,49 @@ export default function InsightsScreen() {
     router.push('/assistant');
   };
 
+  const formatApproachName = (approach: string): string => {
+    const names: Record<string, string> = {
+      cbt: 'CBT',
+      act: 'ACT',
+      motivationalInterviewing: 'Motivational',
+      rogerian: 'Person-Centered',
+      socratic: 'Socratic',
+      grow: 'GROW',
+      solutionFocused: 'Solution-Focused',
+      performance: 'Performance',
+      habitFormation: 'Habit Formation',
+      valuesBasedLife: 'Values-Based',
+    };
+    return names[approach] || approach;
+  };
+
+  const formatCategoryName = (category: string): string => {
+    const names: Record<string, string> = {
+      reframe: 'Reframing',
+      question: 'Questions',
+      exercise: 'Exercises',
+      strategy: 'Strategies',
+      resource: 'Resources',
+      reminder: 'Reminders',
+      challenge: 'Challenges',
+      validation: 'Validation',
+      metaphor: 'Metaphors',
+    };
+    return names[category] || category;
+  };
+
+  const formatRelativeDate = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(date).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -83,6 +146,61 @@ export default function InsightsScreen() {
         <Text style={styles.title}>Insights</Text>
         <Text style={styles.subtitle}>Discover patterns in your thoughts</Text>
       </View>
+
+      {/* Audio Overview Player */}
+      {insights.length > 0 && (
+        <AudioOverviewPlayer
+          insights={insights}
+          isPlaying={audioPlaying}
+          isGenerating={audioGenerating}
+          onPlay={() => playAudio(insights)}
+          onStop={stopAudio}
+          error={audioError}
+        />
+      )}
+
+      {/* Personal Strategies Section */}
+      {topPatterns.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💡 What Works For You</Text>
+          <Text style={styles.sectionSubtitle}>
+            Strategies that have been most effective in your conversations
+          </Text>
+
+          {topPatterns.map((pattern) => (
+            <View key={pattern.id} style={styles.patternCard}>
+              <View style={styles.patternHeader}>
+                <Text style={styles.patternName}>
+                  {formatApproachName(pattern.approach)} - {formatCategoryName(pattern.category)}
+                </Text>
+                <View style={styles.successBadge}>
+                  <Text style={styles.successRate}>
+                    {Math.round((pattern.successCount / pattern.useCount) * 100)}% effective
+                  </Text>
+                </View>
+              </View>
+
+              {pattern.worksBestWhen.length > 0 && (
+                <View style={styles.conditionsSection}>
+                  <Text style={styles.conditionsLabel}>Works best when:</Text>
+                  <Text style={styles.conditionsText}>
+                    {pattern.worksBestWhen.slice(0, 2).join(', ')}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.patternFooter}>
+                <Text style={styles.useCount}>
+                  Used {pattern.useCount} times
+                </Text>
+                <Text style={styles.lastUsed}>
+                  Last: {formatRelativeDate(pattern.lastUsed)}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Quick Stats */}
       <View style={styles.statsCard}>
@@ -446,5 +564,76 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: JonoTheme.colors.accent.primary,
     fontWeight: '600',
+  },
+  // Pattern card styles
+  patternCard: {
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+    ...JonoTheme.shadows.soft,
+  },
+  patternHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 8,
+  },
+  patternName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: JonoTheme.colors.text.primary,
+    lineHeight: 20,
+  },
+  successBadge: {
+    backgroundColor: JonoTheme.colors.accent.muted,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: JonoTheme.borderRadius.full,
+  },
+  successRate: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: JonoTheme.colors.accent.primary,
+  },
+  conditionsSection: {
+    backgroundColor: JonoTheme.colors.background.primary,
+    borderRadius: JonoTheme.borderRadius.md,
+    padding: 12,
+    marginBottom: 12,
+  },
+  conditionsLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: JonoTheme.colors.text.tertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  conditionsText: {
+    fontSize: 13,
+    color: JonoTheme.colors.text.secondary,
+    lineHeight: 19,
+  },
+  patternFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: JonoTheme.colors.border.light,
+  },
+  useCount: {
+    fontSize: 12,
+    color: JonoTheme.colors.text.tertiary,
+    fontWeight: '500',
+  },
+  lastUsed: {
+    fontSize: 12,
+    color: JonoTheme.colors.text.tertiary,
   },
 });

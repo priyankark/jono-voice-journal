@@ -9,6 +9,7 @@ import {
   ReflectionPrompt,
   Conversation,
 } from '../types';
+import { safeParseJSON } from './jsonUtils';
 
 // === Personal Insights Generation ===
 
@@ -166,9 +167,9 @@ Return ONLY a JSON array with this exact structure:
       maxOutputTokens: 1000,
     });
 
-    const parsed = JSON.parse(insightsJson);
+    const parsed = safeParseJSON<any[]>(insightsJson, []);
 
-    if (!Array.isArray(parsed)) {
+    if (!Array.isArray(parsed) || parsed.length === 0) {
       return generateInsightsFallback(recentEntries, Array.from(allTags));
     }
 
@@ -272,9 +273,9 @@ Return ONLY a JSON array:
       maxOutputTokens: 1200,
     });
 
-    const parsed = JSON.parse(patternsJson);
+    const parsed = safeParseJSON<any[]>(patternsJson, []);
 
-    if (!Array.isArray(parsed)) {
+    if (!Array.isArray(parsed) || parsed.length === 0) {
       return generatePatternsFallback(relevantEntries);
     }
 
@@ -525,8 +526,8 @@ Return ONLY a JSON array:
         maxOutputTokens: 500,
       });
 
-      const parsed = JSON.parse(promptsJson);
-      if (Array.isArray(parsed)) {
+      const parsed = safeParseJSON<any[]>(promptsJson, []);
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.slice(0, count).map((p: any) => ({
           id: Crypto.randomUUID(),
           prompt: p.prompt,

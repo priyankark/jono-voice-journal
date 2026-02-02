@@ -166,6 +166,16 @@ export interface ConversationMessage {
   audioUri?: string;  // For user messages with voice input
 }
 
+// === Conversation Compaction Types ===
+
+export interface ConversationCompact {
+  summary: string;
+  themesDiscussed: string[];
+  keyFacts: string[];
+  messageCountCompacted: number;
+  lastCompactedAt: Date;
+}
+
 export interface Conversation {
   id: string;
   messages: ConversationMessage[];
@@ -174,6 +184,8 @@ export interface Conversation {
   summary?: string;           // AI-generated summary
   convertedToEntryId?: string; // If conversation was saved as entry
   tags?: string[];            // Auto-generated tags
+  compacted?: ConversationCompact;  // Compacted older context
+  discussedThemes?: string[];       // Themes discussed for anti-repetition
 }
 
 // === Search Types ===
@@ -221,6 +233,10 @@ export interface ReflectionPrompt {
   relatedToTheme?: string;
 }
 
+// === Audio Overview Types ===
+
+export type AudioOverviewState = 'idle' | 'generating' | 'playing' | 'error';
+
 // === App State Types ===
 
 export interface AppSettings {
@@ -239,4 +255,163 @@ export interface ContentLibraryFilters {
   status: ContentFilterStatus;
   sortBy: ContentSortOption;
   searchQuery: string;
+}
+
+// === Therapeutic Framework Types ===
+
+export type TherapeuticApproach =
+  | 'cbt'
+  | 'act'
+  | 'motivationalInterviewing'
+  | 'rogerian'
+  | 'socratic';
+
+export interface TherapeuticFramework {
+  name: string;
+  description: string;
+  indicators: string[];
+  techniques: string[];
+  sampleResponses: string[];
+  contraindications: string[];
+}
+
+// === Coaching Framework Types ===
+
+export type CoachingApproach =
+  | 'grow'
+  | 'solutionFocused'
+  | 'performance'
+  | 'habitFormation'
+  | 'valuesBasedLife';
+
+export interface CoachingFramework {
+  name: string;
+  description: string;
+  indicators: string[];
+  techniques: string[];
+  sampleResponses: string[];
+  contraindications: string[];
+  outcomeMetrics?: string[];
+}
+
+export type ApproachType = 'therapy' | 'coaching' | 'hybrid';
+
+// === Response Planning Types ===
+
+export interface EmotionalIndicators {
+  valence: 'positive' | 'negative' | 'neutral' | 'mixed';
+  intensity: 'low' | 'medium' | 'high';
+  cognitiveDistortions: string[];
+  readyForChallenge: boolean;
+  isEarlyConversation: boolean;
+  phase?: 'opening' | 'exploring' | 'deepening';
+  stuckInValidation?: boolean;
+}
+
+export type ResponseIntent = 'validate' | 'explore' | 'challenge' | 'reframe' | 'support';
+
+export interface ResponsePlan {
+  approach: TherapeuticApproach | CoachingApproach;
+  approachType?: ApproachType;
+  intent: ResponseIntent;
+  emotionalIndicators: EmotionalIndicators;
+  memoryContext: MemoryContext;
+  memoryPromptAddition: string;
+  shouldUseAI: boolean;
+  personalizedStrategy?: PersonalizedStrategy;
+}
+
+// === Memory / RAG Types ===
+
+export interface RelevantEntry {
+  entryId: string;
+  date: Date;
+  summary: string;
+  relevanceScore: number;
+  matchedKeywords: string[];
+}
+
+export interface MemoryContext {
+  relevantEntries: RelevantEntry[];
+  recurringThemes: string[];
+  totalEntriesSearched: number;
+}
+
+// === Intervention Library Types ===
+
+export type InterventionCategory =
+  | 'reframe'
+  | 'question'
+  | 'exercise'
+  | 'strategy'
+  | 'resource'
+  | 'reminder'
+  | 'challenge'
+  | 'validation'
+  | 'metaphor';
+
+export interface Intervention {
+  id: string;
+  timestamp: Date;
+  conversationId: string;
+  messageId: string;
+
+  // What was suggested
+  approach: TherapeuticApproach | CoachingApproach;
+  category: InterventionCategory;
+  content: string;
+
+  // Context
+  userContext: string;
+  emotionalState: {
+    valence: 'positive' | 'negative' | 'neutral' | 'mixed';
+    intensity: 'low' | 'medium' | 'high';
+  };
+  situationTags: string[];
+
+  // Outcomes
+  feedback?: InterventionFeedback;
+  effectiveness?: number; // 0-1 score
+}
+
+export interface InterventionFeedback {
+  timestamp: Date;
+  type: 'immediate' | 'followup' | 'retrospective';
+  userEngagement: 'high' | 'medium' | 'low';
+  emotionalShift: 'positive' | 'neutral' | 'negative';
+  insightReported: boolean;
+  actionTaken: boolean;
+  userRating?: number; // 1-5
+}
+
+export interface InterventionPattern {
+  id: string;
+  category: InterventionCategory;
+  approach: TherapeuticApproach | CoachingApproach;
+  situationProfile: {
+    commonTags: string[];
+    emotionalStates: EmotionalIndicators[];
+  };
+  useCount: number;
+  successCount: number;
+  averageEffectiveness: number;
+  lastUsed: Date;
+  worksBestWhen: string[];
+  avoidsWhen: string[];
+}
+
+export interface InterventionLibrary {
+  interventions: Intervention[];
+  patterns: InterventionPattern[];
+  userPreferences: {
+    preferredApproaches: (TherapeuticApproach | CoachingApproach)[];
+    avoidedApproaches: (TherapeuticApproach | CoachingApproach)[];
+  };
+}
+
+export interface PersonalizedStrategy {
+  approach: TherapeuticApproach | CoachingApproach;
+  category: InterventionCategory;
+  confidence: number;
+  reasoning: string;
 }
