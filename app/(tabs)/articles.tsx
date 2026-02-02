@@ -27,6 +27,7 @@ import {
   Article,
   ContentFilterStatus,
   ContentSortOption,
+  ContentType,
   JournalEntry,
   PRESET_PROMPT_TEMPLATES,
   PromptTemplate,
@@ -39,6 +40,7 @@ export default function ContentLibraryScreen() {
   // View state
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ContentFilterStatus>('all');
+  const [contentTypeFilter, setContentTypeFilter] = useState<ContentType | 'all'>('all');
   const [sortBy, setSortBy] = useState<ContentSortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -73,6 +75,11 @@ export default function ContentLibraryScreen() {
       result = result.filter(a => a.status === statusFilter);
     }
 
+    // Apply content type filter
+    if (contentTypeFilter !== 'all') {
+      result = result.filter(a => a.contentType === contentTypeFilter);
+    }
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -102,7 +109,22 @@ export default function ContentLibraryScreen() {
     }
 
     return result;
-  }, [articles, statusFilter, sortBy, searchQuery]);
+  }, [articles, statusFilter, contentTypeFilter, sortBy, searchQuery]);
+
+  // Content type filter options
+  const contentTypeOptions: { value: ContentType | 'all'; label: string; icon: string }[] = [
+    { value: 'all', label: 'All', icon: '📄' },
+    { value: 'article', label: 'Articles', icon: '📝' },
+    { value: 'poem', label: 'Poems', icon: '🎭' },
+    { value: 'letter', label: 'Letters', icon: '💌' },
+    { value: 'gratitude', label: 'Gratitude', icon: '🙏' },
+    { value: 'lessons', label: 'Lessons', icon: '📚' },
+    { value: 'story', label: 'Stories', icon: '📖' },
+    { value: 'affirmations', label: 'Affirmations', icon: '✨' },
+    { value: 'mantra', label: 'Mantras', icon: '🕉️' },
+    { value: 'reflection', label: 'Reflections', icon: '🔮' },
+    { value: 'custom', label: 'Custom', icon: '🎨' },
+  ];
 
   // Stats
   const stats = useMemo(() => ({
@@ -183,7 +205,7 @@ export default function ContentLibraryScreen() {
     setCustomPrompt(preset.prompt);
   };
 
-  const handleGenerateWithPrompt = async (prompt?: string) => {
+  const handleGenerateWithPrompt = async (prompt?: string, usePreset?: boolean) => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const recentEntries = entries.filter(e => new Date(e.date) >= weekAgo);
@@ -199,13 +221,14 @@ export default function ContentLibraryScreen() {
     try {
       const article = await generateArticle(recentEntries, {
         customPrompt: prompt || undefined,
+        presetId: usePreset && selectedPreset ? selectedPreset.id : undefined,
       });
 
-      // Save generation metadata
-      if (prompt) {
+      // Save generation metadata (already handled in generateArticle now)
+      if (prompt && !usePreset) {
         article.generationPrompt = prompt;
         article.generationType = 'custom';
-      } else {
+      } else if (!prompt) {
         article.generationType = 'standard';
       }
 
@@ -250,9 +273,9 @@ export default function ContentLibraryScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Content Library</Text>
+          <Text style={styles.headerTitle}>Your Creations</Text>
           <Text style={styles.headerSubtitle}>
-            Your creative output, organized
+            Transformed thoughts into meaningful content
           </Text>
         </View>
 
@@ -304,6 +327,35 @@ export default function ContentLibraryScreen() {
           </View>
           <Text style={styles.generateChevron}>→</Text>
         </TouchableOpacity>
+
+        {/* Content Type Filter */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.typeFilterScroll}
+          contentContainerStyle={styles.typeFilterContent}
+        >
+          {contentTypeOptions.map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.typeFilterButton,
+                contentTypeFilter === option.value && styles.typeFilterButtonActive,
+              ]}
+              onPress={() => setContentTypeFilter(option.value)}
+            >
+              <Text style={styles.typeFilterIcon}>{option.icon}</Text>
+              <Text
+                style={[
+                  styles.typeFilterLabel,
+                  contentTypeFilter === option.value && styles.typeFilterLabelActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Filter Bar */}
         <ContentLibraryFilter
@@ -566,9 +618,52 @@ export default function ContentLibraryScreen() {
               textAlignVertical="top"
             />
 
+            {/* Generate with Preset Button (when preset is selected) */}
+            {selectedPreset && (
+              <TouchableOpacity
+                style={[
+                  styles.generateCustomButton,
+                  isGenerating && styles.generateCustomButtonDisabled,
+                ]}
+                onPress={() => handleGenerateWithPrompt(selectedPreset.prompt, true)}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.generateCustomButtonText}>
+                    Generate {selectedPreset.label}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {/* Generate Custom Button (when custom prompt is typed) */}
+            {customPrompt.trim() && !selectedPreset && (
+              <TouchableOpacity
+                style={[
+                  styles.generateCustomButton,
+                  isGenerating && styles.generateCustomButtonDisabled,
+                ]}
+                onPress={() => handleGenerateWithPrompt(customPrompt, false)}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.generateCustomButtonText}>
+                    Generate with Custom Prompt
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+
             {/* Standard Article Option */}
             <TouchableOpacity
-              style={styles.standardArticleButton}
+              style={[
+                styles.standardArticleButton,
+                isGenerating && styles.standardArticleButtonDisabled,
+              ]}
               onPress={() => handleGenerateWithPrompt()}
               disabled={isGenerating}
             >
@@ -577,24 +672,6 @@ export default function ContentLibraryScreen() {
                 <Text style={styles.standardArticleTitle}>Standard Article</Text>
                 <Text style={styles.standardArticleSubtitle}>Generate a journalistic article</Text>
               </View>
-            </TouchableOpacity>
-
-            {/* Generate Button */}
-            <TouchableOpacity
-              style={[
-                styles.generateCustomButton,
-                (!customPrompt.trim() || isGenerating) && styles.generateCustomButtonDisabled,
-              ]}
-              onPress={() => handleGenerateWithPrompt(customPrompt)}
-              disabled={!customPrompt.trim() || isGenerating}
-            >
-              {isGenerating ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.generateCustomButtonText}>
-                  Generate with Custom Prompt
-                </Text>
-              )}
             </TouchableOpacity>
 
             {/* Hint */}
@@ -718,6 +795,41 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: JonoTheme.colors.accent.primary,
     fontWeight: '700',
+  },
+  typeFilterScroll: {
+    marginBottom: 16,
+    marginHorizontal: -16,
+  },
+  typeFilterContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  typeFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.full,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.border.light,
+  },
+  typeFilterButtonActive: {
+    backgroundColor: JonoTheme.colors.accent.muted,
+    borderColor: JonoTheme.colors.accent.primary,
+  },
+  typeFilterIcon: {
+    fontSize: 14,
+  },
+  typeFilterLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: JonoTheme.colors.text.secondary,
+  },
+  typeFilterLabelActive: {
+    color: JonoTheme.colors.accent.primary,
+    fontWeight: '600',
   },
   contentList: {
     marginTop: 8,
@@ -1021,6 +1133,9 @@ const styles = StyleSheet.create({
     borderColor: JonoTheme.colors.border.light,
     minHeight: 72,
     ...JonoTheme.shadows.soft,
+  },
+  standardArticleButtonDisabled: {
+    opacity: 0.5,
   },
   standardArticleIcon: {
     fontSize: 28,

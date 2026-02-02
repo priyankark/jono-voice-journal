@@ -4,8 +4,9 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useJournalStore } from '../../stores/journalStore';
 import { formatDateTime, formatDuration } from '../../utils/dateHelpers';
-import { generateArticle } from '../../services/articleGenerator';
 import { JonoTheme } from '../../constants/theme';
+import { TransformModal } from '../../components/TransformModal';
+import { Article } from '../../types';
 
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,6 +16,7 @@ export default function EntryDetailScreen() {
   const entry = entries.find(e => e.id === id);
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState(entry?.textNotes || '');
+  const [showTransformModal, setShowTransformModal] = useState(false);
 
   if (!entry) {
     return (
@@ -49,18 +51,12 @@ export default function EntryDetailScreen() {
     );
   };
 
-  const handleDistill = async () => {
-    try {
-      const article = await generateArticle([entry]);
-      addArticle(article);
-      Alert.alert('Article Created', 'Your entry has been transformed into an article.', [
-        { text: 'View', onPress: () => router.push('/articles') },
-        { text: 'OK' },
-      ]);
-    } catch (error) {
-      console.error('Failed to generate article:', error);
-      Alert.alert('Error', 'Failed to create article. Please try again.');
-    }
+  const handleTransformSuccess = (article: Article) => {
+    addArticle(article);
+    Alert.alert('Content Created', 'Your entry has been transformed.', [
+      { text: 'View', onPress: () => router.push('/articles') },
+      { text: 'OK' },
+    ]);
   };
 
   return (
@@ -160,14 +156,22 @@ export default function EntryDetailScreen() {
 
       {/* Actions */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.distillButton} onPress={handleDistill}>
-          <Text style={styles.distillButtonText}>✨ Transform to Article</Text>
+        <TouchableOpacity style={styles.distillButton} onPress={() => setShowTransformModal(true)}>
+          <Text style={styles.distillButtonText}>✨ Transform</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
           <Text style={styles.deleteButtonText}>Delete Entry</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Transform Modal */}
+      <TransformModal
+        visible={showTransformModal}
+        onClose={() => setShowTransformModal(false)}
+        entries={[entry]}
+        onSuccess={handleTransformSuccess}
+      />
     </ScrollView>
   );
 }

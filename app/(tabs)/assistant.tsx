@@ -1,5 +1,5 @@
 // Assistant Screen - Jono voice-first journaling companion
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,23 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssistant } from '../../hooks/useAssistant';
+import { useJournalStore } from '../../stores/journalStore';
 import { AnimatedOrb } from '../../components/AnimatedOrb';
 import {
   MessageBubble,
   LiveTranscriptBubble,
   ThinkingBubble,
 } from '../../components/MessageBubble';
+import { TransformModal } from '../../components/TransformModal';
 import { JonoTheme, getTimeBasedGreeting } from '../../constants/theme';
+import { Article, JournalEntry } from '../../types';
 
 export default function AssistantScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
+  const { addArticle, entries } = useJournalStore();
+  const [showTransformModal, setShowTransformModal] = useState(false);
+  const [transformEntry, setTransformEntry] = useState<JournalEntry | null>(null);
 
   const {
     state,
@@ -82,6 +88,23 @@ export default function AssistantScreen() {
         ]
       );
     }
+  };
+
+  const handleTransform = async () => {
+    // First save the conversation as an entry, then open transform modal
+    const entry = await saveAsEntry();
+    if (entry) {
+      setTransformEntry(entry);
+      setShowTransformModal(true);
+    }
+  };
+
+  const handleTransformSuccess = (article: Article) => {
+    addArticle(article);
+    Alert.alert('Content Created', 'Your conversation has been transformed.', [
+      { text: 'View', onPress: () => router.push('/articles') },
+      { text: 'OK' },
+    ]);
   };
 
   const handleNewConversation = () => {
@@ -171,11 +194,29 @@ export default function AssistantScreen() {
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
         {canSaveAsEntry && (
-          <TouchableOpacity style={styles.saveButton} onPress={handleSaveAsEntry}>
-            <Text style={styles.saveButtonText}>Save as Journal Entry</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveAsEntry}>
+              <Text style={styles.saveButtonText}>Save as Entry</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.transformButton} onPress={handleTransform}>
+              <Text style={styles.transformButtonText}>✨ Transform</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
+
+      {/* Transform Modal */}
+      {transformEntry && (
+        <TransformModal
+          visible={showTransformModal}
+          onClose={() => {
+            setShowTransformModal(false);
+            setTransformEntry(null);
+          }}
+          entries={[transformEntry]}
+          onSuccess={handleTransformSuccess}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -240,7 +281,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     minHeight: 60,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   saveButton: {
+    flex: 1,
     backgroundColor: JonoTheme.colors.accent.secondary,
     paddingVertical: 16,
     borderRadius: JonoTheme.borderRadius.md,
@@ -248,6 +294,19 @@ const styles = StyleSheet.create({
     ...JonoTheme.shadows.soft,
   },
   saveButtonText: {
+    color: JonoTheme.colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  transformButton: {
+    flex: 1,
+    backgroundColor: JonoTheme.colors.accent.primary,
+    paddingVertical: 16,
+    borderRadius: JonoTheme.borderRadius.md,
+    alignItems: 'center',
+    ...JonoTheme.shadows.soft,
+  },
+  transformButtonText: {
     color: JonoTheme.colors.text.inverse,
     fontSize: 16,
     fontWeight: '600',

@@ -92,21 +92,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="articles"
         options={{
-          title: 'Search',
-          headerShown: false,
+          title: 'Library',
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="🔍" focused={focused} label="Search" />
+            <TabIcon icon="📚" focused={focused} label="Library" />
           ),
         }}
       />
       {/* Hidden screens */}
       <Tabs.Screen
-        name="articles"
+        name="search"
         options={{
-          href: null, // Hide from tab bar but keep accessible
-          title: 'Articles',
+          href: null, // Hide from tab bar - accessible from Library header
+          title: 'Search',
+          headerShown: false,
         }}
       />
       <Tabs.Screen

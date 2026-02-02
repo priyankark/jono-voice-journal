@@ -4,12 +4,11 @@ import { useRouter } from 'expo-router';
 import { useJournalStore } from '../../stores/journalStore';
 import { EntryCard } from '../../components/EntryCard';
 import { formatDate, getRelativeDate } from '../../utils/dateHelpers';
-import { generateArticle } from '../../services/articleGenerator';
 import { JonoTheme, getTimeBasedGreeting } from '../../constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { entries, addArticle } = useJournalStore();
+  const { entries, articles } = useJournalStore();
   const [refreshing, setRefreshing] = React.useState(false);
 
   // Get today's entries
@@ -32,16 +31,6 @@ export default function HomeScreen() {
     acc[dateKey].push(entry);
     return acc;
   }, {} as Record<string, typeof entries>);
-
-  const handleDistill = async (entry: typeof entries[0]) => {
-    try {
-      const article = await generateArticle([entry]);
-      addArticle(article);
-      router.push('/articles');
-    } catch (error) {
-      console.error('Failed to generate article:', error);
-    }
-  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -87,6 +76,20 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* Your Creations quick access */}
+      {articles.length > 0 && (
+        <TouchableOpacity style={styles.creationsCard} onPress={() => router.push('/articles')}>
+          <Text style={styles.creationsIcon}>📚</Text>
+          <View style={styles.creationsText}>
+            <Text style={styles.creationsTitle}>Your Creations</Text>
+            <Text style={styles.creationsSubtitle}>
+              {articles.length} {articles.length === 1 ? 'piece' : 'pieces'} of content
+            </Text>
+          </View>
+          <Text style={styles.creationsArrow}>→</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Today's Entries */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Today</Text>
@@ -102,7 +105,6 @@ export default function HomeScreen() {
               key={entry.id}
               entry={entry}
               onPress={() => router.push(`/entry/${entry.id}`)}
-              onDistill={() => handleDistill(entry)}
             />
           ))
         )}
@@ -120,7 +122,6 @@ export default function HomeScreen() {
                   key={entry.id}
                   entry={entry}
                   onPress={() => router.push(`/entry/${entry.id}`)}
-                  onDistill={() => handleDistill(entry)}
                 />
               ))}
             </View>
@@ -233,6 +234,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: JonoTheme.colors.text.secondary,
     marginTop: 4,
+  },
+  creationsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: JonoTheme.colors.background.card,
+    borderRadius: JonoTheme.borderRadius.lg,
+    padding: 18,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: JonoTheme.colors.accent.primary,
+    minHeight: 76,
+    ...JonoTheme.shadows.soft,
+  },
+  creationsIcon: {
+    fontSize: 28,
+    marginRight: 16,
+  },
+  creationsText: {
+    flex: 1,
+  },
+  creationsTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: JonoTheme.colors.text.primary,
+  },
+  creationsSubtitle: {
+    fontSize: 14,
+    color: JonoTheme.colors.text.secondary,
+    marginTop: 4,
+  },
+  creationsArrow: {
+    fontSize: 20,
+    color: JonoTheme.colors.accent.primary,
+    fontWeight: '600',
   },
   section: {
     marginBottom: 24,

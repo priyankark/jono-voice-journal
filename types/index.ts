@@ -24,6 +24,8 @@ export interface JournalEntry {
   mood?: string;  // Optional mood/emotional state
 }
 
+export type ContentType = 'article' | 'poem' | 'letter' | 'gratitude' | 'lessons' | 'story' | 'affirmations' | 'mantra' | 'reflection' | 'custom';
+
 export interface Article {
   id: string;
   entryIds: string[];
@@ -35,6 +37,7 @@ export interface Article {
   createdAt: Date;
   generationPrompt?: string;  // Custom prompt used to generate this article
   generationType?: 'standard' | 'custom';  // How this article was generated
+  contentType?: ContentType;  // Type of content (maps to preset ID or 'article'/'custom')
 }
 
 // Preset prompt templates for quick content generation

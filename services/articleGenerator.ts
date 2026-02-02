@@ -1,4 +1,4 @@
-import { JournalEntry, Article, PRESET_PROMPT_TEMPLATES } from '../types';
+import { JournalEntry, Article, PRESET_PROMPT_TEMPLATES, ContentType } from '../types';
 import * as Crypto from 'expo-crypto';
 import { apple } from '@react-native-ai/apple';
 import { generateText } from 'ai';
@@ -59,12 +59,18 @@ const TEMPERATURE_CONFIG = {
 
 const SYSTEM_PROMPTS = {
   // Master system prompt for all content generation
-  base: `You are Jono, a world-class AI writing assistant specialized in personal reflection and journaling. You transform raw thoughts, voice notes, and journal entries into meaningful, polished content.
+  base: `You are a skilled writing assistant transforming personal journal entries into meaningful content.
+
+CRITICAL RULES:
+- Write FROM the user's perspective, not as an AI
+- Never refer to yourself, any AI persona, or "Jono/Jonas"
+- Use first person ("I", "my") when the content calls for it - this is THE USER'S voice
+- The output should read as if the user wrote it themselves
 
 CORE PRINCIPLES:
 - Honor the user's authentic voice and experiences
 - Write with warmth, empathy, and emotional intelligence
-- Create content that feels personal, not generic
+- Create content that feels deeply personal, not AI-generated
 - Preserve the essence of original thoughts while elevating expression
 - Be insightful without being preachy or presumptuous
 
@@ -98,47 +104,53 @@ QUALITY STANDARDS:
 
   // For preset-specific content
   presets: {
-    poem: `You are a poet who finds beauty in everyday experiences and emotions. Your poetry:
-- Uses imagery drawn directly from the source material
-- Balances accessibility with depth
-- Employs natural rhythm without forced rhyme schemes
-- Captures complex emotions in crystallized moments
-- Feels genuine, never pretentious or overly abstract`,
+    poem: `Create a poem that finds beauty in everyday experiences and emotions. The poetry should:
+- Use imagery drawn directly from the source material
+- Balance accessibility with depth
+- Employ natural rhythm without forced rhyme schemes
+- Capture complex emotions in crystallized moments
+- Feel genuine, never pretentious or overly abstract
+- Be written in the user's voice using first person where appropriate`,
 
-    'letter-future': `You are helping someone write a letter to their future self. This letter should:
-- Speak directly and warmly to the future reader
+    'letter-future': `Create a letter to the user's future self. This letter should:
+- Speak directly and warmly to the future reader using "I" and "my"
 - Capture the present moment's texture and feelings
 - Include hopes, lessons, and reminders worth preserving
 - Balance reflection on challenges with gratitude for growth
-- Feel like a time capsule of the current emotional landscape`,
+- Feel like a time capsule of the current emotional landscape
+- Be written entirely from the user's perspective`,
 
-    gratitude: `You are helping someone recognize and articulate gratitude. Your approach:
+    gratitude: `Create a gratitude reflection that:
 - Goes beyond surface-level thankfulness to meaningful appreciation
 - Finds gratitude even in challenging circumstances when authentic
 - Uses specific, sensory language to make gratitude tangible
 - Helps the writer feel genuinely uplifted, not guilted into positivity
-- Connects gratitude to personal values and growth`,
+- Connects gratitude to personal values and growth
+- Uses first person ("I am grateful for...") throughout`,
 
-    lessons: `You are a wise mentor helping distill life lessons from experiences. Your insights:
+    lessons: `Distill life lessons from the user's experiences. The insights should:
 - Extract actionable wisdom, not just observations
 - Connect specific experiences to universal truths
 - Present lessons with humility, not preachiness
 - Honor both successes and struggles as teachers
-- Offer perspective that feels earned, not prescribed`,
+- Offer perspective that feels earned, not prescribed
+- Be written as if the user is sharing their own hard-won wisdom`,
 
-    story: `You are a creative storyteller transforming personal experiences into narrative fiction. Your stories:
+    story: `Transform personal experiences into narrative fiction. The story should:
 - Use the emotional truth of experiences as foundation
 - Create compelling characters and scenarios
 - Build tension, discovery, and resolution
 - Balance familiar elements with surprising perspectives
-- Leave readers with something to ponder`,
+- Leave readers with something to ponder
+- Never reference the writing process or any AI involvement`,
 
-    affirmations: `You are crafting personal affirmations rooted in authentic experiences. Your affirmations:
+    affirmations: `Create personal affirmations rooted in authentic experiences. The affirmations should:
 - Draw directly from the user's actual strengths and growth
 - Feel believable and achievable, not impossibly aspirational
 - Use "I" statements that feel natural to say aloud
 - Address specific challenges mentioned in the source material
-- Build confidence without toxic positivity`,
+- Build confidence without toxic positivity
+- Sound like the user speaking to themselves`,
   } as Record<string, string>,
 };
 
@@ -586,6 +598,26 @@ export const generateArticle = async (
       maxTokens: opts.maxLength ? opts.maxLength * 2 : 4000,
     } as any);
 
+    // Determine content type
+    const getContentType = (): ContentType => {
+      if (presetId) {
+        // Map preset ID to content type
+        const presetToType: Record<string, ContentType> = {
+          'poem': 'poem',
+          'letter-future': 'letter',
+          'gratitude': 'gratitude',
+          'lessons': 'lessons',
+          'story': 'story',
+          'affirmations': 'affirmations',
+          'mantra': 'mantra',
+          'reflection': 'reflection',
+        };
+        return presetToType[presetId] || 'custom';
+      }
+      if (isCustomPrompt) return 'custom';
+      return 'article';
+    };
+
     const article: Article = {
       id: Crypto.randomUUID(),
       entryIds: entries.map(e => e.id),
@@ -597,6 +629,7 @@ export const generateArticle = async (
       createdAt: new Date(),
       generationPrompt: opts.customPrompt,
       generationType: isCustomPrompt ? 'custom' : 'standard',
+      contentType: getContentType(),
     };
 
     return article;
@@ -630,6 +663,25 @@ const generateArticleFallback = (
 
   const content = formatAsArticle(rawContent);
 
+  // Determine content type for fallback
+  const getContentTypeFallback = (): ContentType => {
+    if (opts.presetId) {
+      const presetToType: Record<string, ContentType> = {
+        'poem': 'poem',
+        'letter-future': 'letter',
+        'gratitude': 'gratitude',
+        'lessons': 'lessons',
+        'story': 'story',
+        'affirmations': 'affirmations',
+        'mantra': 'mantra',
+        'reflection': 'reflection',
+      };
+      return presetToType[opts.presetId] || 'custom';
+    }
+    if (isCustomPrompt) return 'custom';
+    return 'article';
+  };
+
   return {
     id: Crypto.randomUUID(),
     entryIds: entries.map(e => e.id),
@@ -641,6 +693,7 @@ const generateArticleFallback = (
     createdAt: new Date(),
     generationPrompt: opts.customPrompt,
     generationType: isCustomPrompt ? 'custom' : 'standard',
+    contentType: getContentTypeFallback(),
   };
 };
 

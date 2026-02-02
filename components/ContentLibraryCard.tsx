@@ -12,7 +12,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import Markdown from 'react-native-markdown-display';
-import { Article, JournalEntry } from '../types';
+import { Article, JournalEntry, ContentType } from '../types';
 import { formatDate, getRelativeDate } from '../utils/dateHelpers';
 import { JonoTheme } from '../constants/theme';
 import { getCompactMarkdownStyles } from '../constants/markdownStyles';
@@ -58,6 +58,22 @@ export const ContentLibraryCard: React.FC<ContentLibraryCardProps> = ({
   };
 
   const status = statusConfig[article.status];
+
+  // Content type configuration
+  const contentTypeConfig: Record<ContentType, { label: string; icon: string }> = {
+    article: { label: 'Article', icon: '📝' },
+    poem: { label: 'Poem', icon: '🎭' },
+    letter: { label: 'Letter', icon: '💌' },
+    gratitude: { label: 'Gratitude', icon: '🙏' },
+    lessons: { label: 'Lessons', icon: '📚' },
+    story: { label: 'Story', icon: '📖' },
+    affirmations: { label: 'Affirmations', icon: '✨' },
+    mantra: { label: 'Mantra', icon: '🕉️' },
+    reflection: { label: 'Reflection', icon: '🔮' },
+    custom: { label: 'Custom', icon: '🎨' },
+  };
+
+  const contentType = article.contentType ? contentTypeConfig[article.contentType] : null;
 
   const toggleActions = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -129,16 +145,19 @@ export const ContentLibraryCard: React.FC<ContentLibraryCardProps> = ({
     outputRange: [0, 1],
   });
 
-  // Get generation type label
-  const getTypeLabel = () => {
-    if (article.generationType === 'custom' && article.generationPrompt) {
-      // Find the preset name or show "Custom"
-      return article.generationPrompt.length > 30
-        ? 'Custom'
-        : article.generationPrompt.substring(0, 30);
+  // Get content type display info
+  const getContentTypeDisplay = () => {
+    if (contentType) {
+      return contentType;
     }
-    return 'Article';
+    // Fallback for articles without contentType field
+    if (article.generationType === 'custom' && article.generationPrompt) {
+      return { label: 'Custom', icon: '🎨' };
+    }
+    return { label: 'Article', icon: '📝' };
   };
+
+  const typeDisplay = getContentTypeDisplay();
 
   return (
     <TouchableOpacity
@@ -154,11 +173,10 @@ export const ContentLibraryCard: React.FC<ContentLibraryCardProps> = ({
             <Text style={styles.statusIcon}>{status.icon}</Text>
             <Text style={styles.statusText}>{status.label}</Text>
           </View>
-          {article.generationType && (
-            <View style={styles.typeBadge}>
-              <Text style={styles.typeText}>{getTypeLabel()}</Text>
-            </View>
-          )}
+          <View style={styles.typeBadge}>
+            <Text style={styles.typeIcon}>{typeDisplay.icon}</Text>
+            <Text style={styles.typeText}>{typeDisplay.label}</Text>
+          </View>
         </View>
         <View style={styles.headerRight}>
           <Text style={styles.date}>{getRelativeDate(article.createdAt)}</Text>
@@ -350,13 +368,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: JonoTheme.colors.accent.muted,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: JonoTheme.borderRadius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: JonoTheme.borderRadius.full,
+    gap: 4,
+  },
+  typeIcon: {
+    fontSize: 12,
   },
   typeText: {
-    fontSize: 10,
+    fontSize: 11,
     color: JonoTheme.colors.text.secondary,
     fontWeight: '500',
   },
