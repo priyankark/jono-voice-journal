@@ -21,6 +21,7 @@ export interface JournalEntry {
   createdAt: Date;
   updatedAt: Date;
   fromConversationId?: string;  // If created from assistant conversation
+  mood?: string;  // Optional mood/emotional state
 }
 
 export interface Article {
@@ -32,7 +33,95 @@ export interface Article {
   summary: string;
   status: 'draft' | 'polished' | 'published';
   createdAt: Date;
+  generationPrompt?: string;  // Custom prompt used to generate this article
+  generationType?: 'standard' | 'custom';  // How this article was generated
 }
+
+// Preset prompt templates for quick content generation
+export interface PromptTemplate {
+  id: string;
+  label: string;
+  prompt: string;
+  icon: string;
+  description?: string;  // Longer description for UI hints
+  temperature?: number;  // Optimal AI temperature for this preset
+  style?: 'poetic' | 'conversational' | 'reflective' | 'narrative' | 'grounded';
+}
+
+export const PRESET_PROMPT_TEMPLATES: PromptTemplate[] = [
+  {
+    id: 'poem',
+    label: 'Poem',
+    prompt: 'Transform these thoughts and feelings into a reflective poem that crystallizes the emotional essence of this moment in my life. Use vivid imagery, metaphor, and rhythm to give shape to what might be hard to say directly. Let the poem breathe with white space and create moments of resonance.',
+    icon: '🎭',
+    description: 'Create a poem that captures your emotions through imagery and rhythm',
+    temperature: 0.8,
+    style: 'poetic',
+  },
+  {
+    id: 'letter-future',
+    label: 'Letter to Future Self',
+    prompt: 'Write a warm, honest letter to my future self that captures where I am right now - my hopes, struggles, lessons, and what I want to remember about this chapter of my life. Be specific about details that matter today. Include both the challenges I am facing and the strength I am finding. End with what I hope for the person I am becoming.',
+    icon: '💌',
+    description: 'A time capsule letter for your future self to discover',
+    temperature: 0.6,
+    style: 'conversational',
+  },
+  {
+    id: 'gratitude',
+    label: 'Gratitude List',
+    prompt: 'Help me recognize and articulate the gratitude hidden in these thoughts - not just surface thankfulness, but deep appreciation for what enriches my life. Look beyond the obvious to find gratitude in small moments, in challenges that taught me something, in people who showed up, in my own resilience. Frame each item with WHY it matters.',
+    icon: '🙏',
+    description: 'Discover and celebrate what you have to be grateful for',
+    temperature: 0.4,
+    style: 'grounded',
+  },
+  {
+    id: 'lessons',
+    label: 'Life Lessons',
+    prompt: 'Distill the wisdom from my experiences into clear, actionable life lessons that I can carry forward - insights that feel earned and true. Each lesson should be specific enough to apply and universal enough to remember. Include the context that made each lesson real for me. These should feel like hard-won truths, not generic advice.',
+    icon: '📚',
+    description: 'Extract meaningful wisdom from your experiences',
+    temperature: 0.5,
+    style: 'reflective',
+  },
+  {
+    id: 'story',
+    label: 'Short Story',
+    prompt: 'Use the emotional truth of my experiences as raw material to craft a short story - transform the real into something fictional yet deeply true. Create a character navigating themes similar to mine. Build a scene with sensory details and tension. Let the story arrive at insight without stating it directly. Make it feel like a complete piece with a beginning, middle, and emotionally resonant end.',
+    icon: '📖',
+    description: 'Turn your experiences into creative fiction',
+    temperature: 0.85,
+    style: 'narrative',
+  },
+  {
+    id: 'affirmations',
+    label: 'Affirmations',
+    prompt: 'Create personal affirmations rooted in my actual experiences and growth - statements I can believe because they reflect who I am becoming. Ground each affirmation in evidence from my own life. Make them present-tense declarations that acknowledge both where I am and where I am headed. They should feel true, not aspirational lies.',
+    icon: '✨',
+    description: 'Build confidence with affirmations based on your real strengths',
+    temperature: 0.7,
+    style: 'grounded',
+  },
+  {
+    id: 'mantra',
+    label: 'Personal Mantra',
+    prompt: 'Distill the essence of these thoughts into a single, powerful personal mantra - a phrase I can return to when I need grounding. It should capture the core truth I am learning, be rhythmic and memorable, and resonate with my authentic voice. Give me 3 options with explanations of why each might serve me.',
+    icon: '🕉️',
+    description: 'Create a powerful phrase to return to in difficult moments',
+    temperature: 0.65,
+    style: 'poetic',
+  },
+  {
+    id: 'reflection',
+    label: 'Deep Reflection',
+    prompt: 'Guide me through a deeper exploration of what these thoughts reveal about who I am and what I value. Ask the questions I might be avoiding. Connect the dots I have not seen. Honor the complexity without rushing to resolution. This should feel like a conversation with a wise friend who knows me well.',
+    icon: '🔮',
+    description: 'Explore the deeper meaning behind your thoughts',
+    temperature: 0.55,
+    style: 'reflective',
+  },
+];
 
 export interface ThemeCount {
   theme: string;
@@ -136,4 +225,15 @@ export interface AppSettings {
   hapticFeedback: boolean;
   autoTranscribe: boolean;
   preferredVoice?: string;  // TTS voice preference
+}
+
+// === Content Library Types ===
+
+export type ContentSortOption = 'newest' | 'oldest' | 'title' | 'status';
+export type ContentFilterStatus = 'all' | 'draft' | 'polished' | 'published';
+
+export interface ContentLibraryFilters {
+  status: ContentFilterStatus;
+  sortBy: ContentSortOption;
+  searchQuery: string;
 }

@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: JonoTheme.colors.background.card,
     borderRadius: JonoTheme.borderRadius.lg,
-    padding: 18,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: JonoTheme.colors.border.light,
     ...JonoTheme.shadows.soft,
@@ -151,15 +151,18 @@ const styles = StyleSheet.create({
     color: JonoTheme.colors.text.tertiary,
   },
   distillButton: {
-    marginTop: 12,
-    paddingVertical: 10,
+    marginTop: 14,
+    paddingVertical: 14,
     backgroundColor: JonoTheme.colors.accent.secondary,
     borderRadius: JonoTheme.borderRadius.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    ...JonoTheme.shadows.soft,
   },
   distillText: {
     color: JonoTheme.colors.text.inverse,
     fontWeight: '600',
-    fontSize: 14,
+    fontSize: 15,
   },
 });

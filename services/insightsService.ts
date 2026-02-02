@@ -19,6 +19,64 @@ const INSIGHT_ICONS: Record<InsightType, string> = {
   suggestion: '💡',
 };
 
+// === System Prompts for AI Analysis ===
+
+const INSIGHTS_SYSTEM_PROMPT = `You are a thoughtful personal analyst and compassionate guide for self-discovery. Your role is to help people understand themselves more deeply through their journal entries.
+
+Core Principles:
+- Approach each person's thoughts with genuine curiosity and warmth
+- Recognize that every person's inner world is rich and meaningful
+- Observe patterns without judgment—there are no "good" or "bad" thoughts
+- Focus on growth potential and self-understanding, not criticism
+- Honor vulnerability by treating personal reflections with care
+
+Your Analytical Lens:
+- Emotional patterns: Notice recurring feelings, emotional triggers, and how emotions evolve over time
+- Thought patterns: Identify recurring themes, cognitive habits, and belief systems
+- Behavioral insights: Connect thoughts to actions and notice cause-effect relationships
+- Growth indicators: Celebrate progress, resilience, and moments of self-awareness
+- Connection themes: Notice how relationships and social dynamics appear in their reflections
+- Values and meaning: Identify what truly matters to this person based on what they write about
+
+Tone Guidelines:
+- Write like a wise, supportive friend—warm but insightful
+- Be specific and personal, not generic or clinical
+- Acknowledge complexity—people contain multitudes
+- Offer observations as invitations to explore, not diagnoses
+- Balance affirmation with gentle invitations to go deeper`;
+
+const PATTERN_ANALYSIS_SYSTEM_PROMPT = `You are an expert at recognizing psychological patterns and themes across personal reflections. Your goal is accurate, meaningful pattern detection that helps people see connections they might have missed.
+
+Pattern Recognition Focus:
+- Temporal patterns: How thoughts and feelings change across time of day, week, or in response to events
+- Emotional cycles: Recurring emotional states and what tends to precede or follow them
+- Theme clusters: Related topics that appear together, suggesting deeper connections
+- Language patterns: Words, phrases, or ways of expressing that reveal underlying perspectives
+- Growth trajectories: Evidence of learning, adaptation, or evolving perspectives
+- Tension points: Areas of internal conflict or competing desires that appear repeatedly
+
+Accuracy Guidelines:
+- Only identify patterns you can support with specific examples from the content
+- Distinguish between genuine patterns (3+ occurrences) and one-time observations
+- Note the strength of patterns—some are strong trends, others are emerging themes
+- Acknowledge uncertainty when patterns are suggestive but not conclusive`;
+
+const REFLECTION_PROMPTS_SYSTEM_PROMPT = `You are a skilled facilitator of self-reflection. Your questions should open doors to deeper self-understanding while feeling safe and inviting.
+
+Question Design Principles:
+- Open-ended: Avoid yes/no questions; invite exploration
+- Personally relevant: Base questions on what they've actually written about
+- Gently challenging: Invite deeper thinking without feeling confrontational
+- Emotionally safe: Create space for vulnerability without pressure
+- Growth-oriented: Point toward possibility and self-understanding
+
+Question Categories:
+- Exploring emotions: Help them understand and process feelings
+- Uncovering meaning: What matters most and why
+- Connecting patterns: How different parts of life relate
+- Imagining possibilities: What could be different or better
+- Appreciating growth: Recognizing progress and resilience`;
+
 const getEntryContent = (entry: JournalEntry): string => {
   return [
     entry.textNotes,
@@ -70,26 +128,42 @@ export const generatePersonalInsights = async (
   try {
     const { text: insightsJson } = await generateText({
       model: apple() as any,
-      prompt: `Analyze these journal entries and conversations to identify personal insights. Generate 3-5 insights that would help the person understand themselves better.
+      system: INSIGHTS_SYSTEM_PROMPT,
+      prompt: `Analyze these personal journal entries and conversations to generate meaningful insights.
 
-Types of insights to generate:
-- pattern: A recurring theme, behavior, or thought pattern
-- growth: Evidence of personal growth or positive change
-- reflection: A deeper observation about emotions or motivations
-- suggestion: A gentle suggestion for self-improvement or exploration
-
-Return as JSON array with format:
-[{"type": "pattern|growth|reflection|suggestion", "title": "Brief title (5-8 words)", "description": "2-3 sentence insight"}]
-
-Journal content from the past 2 weeks:
+=== JOURNAL CONTENT (Past 2 Weeks) ===
 ${allContent}
 
-Tags used: ${Array.from(allTags).join(', ') || 'none'}
+=== THEMES & TAGS USED ===
+${Array.from(allTags).join(', ') || 'No tags yet'}
 
-Generate warm, supportive insights. Be specific to what was actually written.
-Return ONLY the JSON array:`,
-      temperature: 0.6,
-      maxTokens: 800,
+=== YOUR TASK ===
+Generate 3-5 personal insights that will help this person understand themselves better. Each insight should feel like a meaningful discovery, not a generic observation.
+
+Insight Types to Generate:
+• PATTERN: A recurring theme, behavior, thought pattern, or emotional tendency you notice across multiple entries. Be specific about what you observe repeating.
+• GROWTH: Evidence of personal development, resilience, learning, or positive change. Celebrate progress, even small wins.
+• REFLECTION: A deeper observation about their emotions, motivations, values, or inner world that they might not have consciously recognized.
+• SUGGESTION: A gentle, actionable invitation to explore something further—framed as a possibility, not a prescription.
+
+Quality Guidelines:
+- Reference specific content from their entries (e.g., "Your reflections on [specific topic] suggest...")
+- Connect dots they might not have seen (e.g., "I notice that when you write about X, you often also mention Y...")
+- Make it personal and specific to THEIR experience, not generic advice
+- Balance affirmation with gentle invitations to explore deeper
+- Use warm, supportive language that honors their vulnerability
+
+=== RESPONSE FORMAT ===
+Return ONLY a JSON array with this exact structure:
+[
+  {
+    "type": "pattern|growth|reflection|suggestion",
+    "title": "Compelling 5-8 word title that captures the insight",
+    "description": "2-3 sentences that explain the insight with specific references to their content. Make it feel personally meaningful."
+  }
+]`,
+      temperature: 0.55,
+      maxOutputTokens: 1000,
     });
 
     const parsed = JSON.parse(insightsJson);
@@ -111,6 +185,169 @@ Return ONLY the JSON array:`,
     console.error('Failed to generate insights:', error);
     return generateInsightsFallback(recentEntries, Array.from(allTags));
   }
+};
+
+// === Deep Pattern Analysis ===
+
+export interface PatternAnalysis {
+  id: string;
+  patternType: 'emotional' | 'behavioral' | 'temporal' | 'thematic' | 'relational';
+  title: string;
+  observation: string;
+  evidence: string[];
+  strength: 'emerging' | 'moderate' | 'strong';
+  suggestion?: string;
+  createdAt: Date;
+}
+
+// Analyze patterns across entries with high accuracy (lower temperature)
+export const analyzePatterns = async (
+  entries: JournalEntry[],
+  conversations: Conversation[]
+): Promise<PatternAnalysis[]> => {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+  const relevantEntries = entries.filter(
+    (e) => new Date(e.date) >= oneMonthAgo
+  );
+  const relevantConversations = conversations.filter(
+    (c) => new Date(c.startedAt) >= oneMonthAgo
+  );
+
+  if (relevantEntries.length < 3) {
+    return []; // Need minimum entries for pattern detection
+  }
+
+  // Prepare structured content for analysis
+  const structuredEntries = relevantEntries.map((e) => ({
+    date: e.date,
+    dayOfWeek: new Date(e.date).toLocaleDateString('en-US', { weekday: 'long' }),
+    mood: e.mood,
+    tags: e.tags,
+    content: getEntryContent(e).slice(0, 500),
+  }));
+
+  if (!apple.isAvailable()) {
+    return generatePatternsFallback(relevantEntries);
+  }
+
+  try {
+    const { text: patternsJson } = await generateText({
+      model: apple() as any,
+      system: PATTERN_ANALYSIS_SYSTEM_PROMPT,
+      prompt: `Analyze these journal entries to identify meaningful patterns across time.
+
+=== STRUCTURED JOURNAL DATA (Past 30 Days) ===
+${JSON.stringify(structuredEntries, null, 2)}
+
+=== ANALYSIS TASK ===
+Identify 2-4 genuine patterns that emerge from this data. Only report patterns you can support with specific evidence.
+
+Pattern Types to Look For:
+• EMOTIONAL: Recurring emotional states, triggers, or cycles (e.g., "anxiety tends to peak on Sunday evenings")
+• BEHAVIORAL: Consistent actions or habits that appear in entries (e.g., "creative energy correlates with morning entries")
+• TEMPORAL: Time-based patterns in mood, themes, or journaling behavior (e.g., "deeper reflections happen on weekends")
+• THEMATIC: Topics or concerns that appear across multiple entries (e.g., "career decisions appear alongside mentions of family")
+• RELATIONAL: Patterns involving relationships or social dynamics (e.g., "energy levels seem tied to social interaction frequency")
+
+Evidence Requirements:
+- Each pattern must have at least 2-3 specific examples from the entries
+- Note the strength: "emerging" (2-3 occurrences), "moderate" (4-6 occurrences), "strong" (7+ occurrences)
+- Be precise—avoid overgeneralizing
+
+=== RESPONSE FORMAT ===
+Return ONLY a JSON array:
+[
+  {
+    "patternType": "emotional|behavioral|temporal|thematic|relational",
+    "title": "Clear, specific 5-10 word description of the pattern",
+    "observation": "2-3 sentences explaining what you observe and why it might be meaningful",
+    "evidence": ["Specific example 1 from entries", "Specific example 2", "Specific example 3"],
+    "strength": "emerging|moderate|strong",
+    "suggestion": "Optional: A gentle question or invitation to explore this pattern further"
+  }
+]`,
+      temperature: 0.35,
+      maxOutputTokens: 1200,
+    });
+
+    const parsed = JSON.parse(patternsJson);
+
+    if (!Array.isArray(parsed)) {
+      return generatePatternsFallback(relevantEntries);
+    }
+
+    return parsed.slice(0, 4).map((pattern: any) => ({
+      id: Crypto.randomUUID(),
+      patternType: pattern.patternType || 'thematic',
+      title: pattern.title || 'Pattern Detected',
+      observation: pattern.observation || '',
+      evidence: Array.isArray(pattern.evidence) ? pattern.evidence : [],
+      strength: pattern.strength || 'emerging',
+      suggestion: pattern.suggestion,
+      createdAt: new Date(),
+    }));
+  } catch (error) {
+    console.error('Failed to analyze patterns:', error);
+    return generatePatternsFallback(relevantEntries);
+  }
+};
+
+// Fallback pattern detection when AI is unavailable
+const generatePatternsFallback = (entries: JournalEntry[]): PatternAnalysis[] => {
+  const patterns: PatternAnalysis[] = [];
+
+  // Detect mood patterns
+  const moodCounts: Record<string, number> = {};
+  entries.forEach((e) => {
+    if (e.mood) {
+      moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+    }
+  });
+
+  const dominantMood = Object.entries(moodCounts)
+    .sort(([, a], [, b]) => b - a)[0];
+
+  if (dominantMood && dominantMood[1] >= 3) {
+    patterns.push({
+      id: Crypto.randomUUID(),
+      patternType: 'emotional',
+      title: `${dominantMood[0]} appears frequently in your entries`,
+      observation: `Over the past month, "${dominantMood[0]}" has been your most common emotional state, appearing in ${dominantMood[1]} entries. This consistency might be worth exploring.`,
+      evidence: entries
+        .filter((e) => e.mood === dominantMood[0])
+        .slice(0, 3)
+        .map((e) => `Entry on ${new Date(e.date).toLocaleDateString()}`),
+      strength: dominantMood[1] >= 7 ? 'strong' : dominantMood[1] >= 4 ? 'moderate' : 'emerging',
+      suggestion: 'What do you think contributes to this emotional pattern?',
+      createdAt: new Date(),
+    });
+  }
+
+  // Detect day-of-week patterns
+  const dayOfWeekCounts: Record<string, number> = {};
+  entries.forEach((e) => {
+    const day = new Date(e.date).toLocaleDateString('en-US', { weekday: 'long' });
+    dayOfWeekCounts[day] = (dayOfWeekCounts[day] || 0) + 1;
+  });
+
+  const mostActiveDay = Object.entries(dayOfWeekCounts)
+    .sort(([, a], [, b]) => b - a)[0];
+
+  if (mostActiveDay && mostActiveDay[1] >= 3) {
+    patterns.push({
+      id: Crypto.randomUUID(),
+      patternType: 'temporal',
+      title: `${mostActiveDay[0]}s are your most reflective day`,
+      observation: `You tend to journal most frequently on ${mostActiveDay[0]}s. This might indicate when you naturally feel most inclined toward self-reflection.`,
+      evidence: [`${mostActiveDay[1]} entries on ${mostActiveDay[0]}s in the past month`],
+      strength: 'emerging',
+      createdAt: new Date(),
+    });
+  }
+
+  return patterns;
 };
 
 // Fallback insights when AI is unavailable
@@ -178,34 +415,44 @@ const getDefaultInsights = (): PersonalInsight[] => [
 
 const REFLECTION_PROMPTS_BY_CATEGORY = {
   emotional: [
-    'What emotion has been most present for you today?',
-    'When did you feel most like yourself recently?',
-    'What small moment brought you unexpected joy?',
-    'What are you holding onto that might be worth releasing?',
+    'What emotion has been sitting with you today, and what might it be trying to tell you?',
+    'When did you feel most like yourself recently—what were you doing and who were you with?',
+    'What small, unexpected moment brought you joy that you almost missed?',
+    'What are you carrying that might feel lighter if you set it down, even briefly?',
+    'If your current mood had a message for you, what would it say?',
+    'What feeling have you been avoiding, and what would happen if you let yourself feel it fully?',
   ],
   growth: [
-    'What have you learned about yourself recently?',
-    'Where have you noticed yourself growing?',
-    'What challenge helped you become stronger?',
-    'What skill or quality would you like to develop?',
+    'What have you learned about yourself recently that surprised you?',
+    'Where have you noticed yourself responding differently than you would have a year ago?',
+    'What challenge are you facing right now that might actually be helping you grow?',
+    'What quality in yourself are you learning to appreciate more?',
+    'What old belief about yourself are you starting to question?',
+    'What would your past self be proud of about who you are becoming?',
   ],
   gratitude: [
-    'Who made a positive difference in your day?',
-    'What simple pleasure are you grateful for?',
-    'What challenge turned out to be a hidden gift?',
-    'What about today would you want to remember?',
+    'Who quietly made your life a little better today—and do they know?',
+    'What simple pleasure grounded you today that you often take for granted?',
+    'What difficulty from your past are you now grateful for, even in small ways?',
+    'What about this exact moment in your life would you want to remember decades from now?',
+    'What part of your daily life would you miss if it suddenly disappeared?',
+    'Who has believed in you when you struggled to believe in yourself?',
   ],
   goals: [
-    'What step could you take toward something you care about?',
-    'What dream keeps returning to your thoughts?',
-    'What would make tomorrow feel meaningful?',
-    'What are you working toward, even if slowly?',
+    'What step—however small—could you take today toward something that matters to you?',
+    'What dream keeps returning to your thoughts, and what might that persistence mean?',
+    'What would need to be true for tomorrow to feel like a day well-lived?',
+    'What are you building slowly, even when progress feels invisible?',
+    'If fear weren\'t a factor, what would you be working toward right now?',
+    'What goal have you been postponing, and what\'s one thing you could do about it this week?',
   ],
   relationships: [
-    'Who have you been thinking about recently?',
-    'What conversation would you like to have?',
-    'How have your relationships been nourishing you?',
-    'Who might need your support right now?',
+    'Who has been on your mind lately, and what might that tell you?',
+    'What conversation have you been putting off that might actually bring you closer to someone?',
+    'How are your closest relationships nourishing you—and how are they challenging you to grow?',
+    'Who in your life might need to hear from you today?',
+    'What quality do you admire in someone close to you that you\'d like to develop in yourself?',
+    'When did you last feel truly seen and understood by someone?',
   ],
 };
 
@@ -231,18 +478,51 @@ export const generateReflectionPrompts = async (
         .join('\n---\n')
         .slice(0, 1500);
 
+      // Extract emotional tone indicators
+      const emotionalContext = entries.slice(0, 5).map(e => ({
+        mood: e.mood,
+        tags: e.tags.slice(0, 3)
+      }));
+
       const { text: promptsJson } = await generateText({
         model: apple() as any,
-        prompt: `Based on these journal entries, generate ${count} thoughtful reflection prompts. The prompts should help the person explore their thoughts more deeply, based on what they've written.
+        system: REFLECTION_PROMPTS_SYSTEM_PROMPT,
+        prompt: `Generate ${count} personalized reflection prompts based on this person's recent journal entries.
 
-Recent journal entries:
+=== RECENT JOURNAL ENTRIES ===
 ${recentContent}
 
-Return as JSON array: [{"prompt": "Question text?", "category": "emotional|growth|gratitude|goals|relationships", "relatedToTheme": "optional theme keyword"}]
+=== EMOTIONAL CONTEXT ===
+Recent moods and themes: ${JSON.stringify(emotionalContext)}
 
-Generate warm, open-ended questions that invite deeper reflection. Return ONLY the JSON array:`,
-        temperature: 0.7,
-        maxTokens: 400,
+=== YOUR TASK ===
+Create ${count} thoughtful questions that will help this person explore their inner world more deeply. Each question should feel personally relevant to what they've been writing about.
+
+Question Design:
+• Build on specific themes, emotions, or situations from their entries
+• Open doors to self-discovery without feeling intrusive
+• Invite exploration of feelings, patterns, or possibilities
+• Feel like a warm invitation, not an interrogation
+• Be specific enough to feel personal, open enough to allow freedom
+
+Categories to Choose From:
+• emotional: Exploring and understanding feelings
+• growth: Reflecting on learning and personal development
+• gratitude: Appreciating positive aspects of life
+• goals: Exploring desires and future directions
+• relationships: Understanding connections with others
+
+=== RESPONSE FORMAT ===
+Return ONLY a JSON array:
+[
+  {
+    "prompt": "A thoughtful, open-ended question that feels personally relevant?",
+    "category": "emotional|growth|gratitude|goals|relationships",
+    "relatedToTheme": "specific theme from their entries this connects to"
+  }
+]`,
+        temperature: 0.65,
+        maxOutputTokens: 500,
       });
 
       const parsed = JSON.parse(promptsJson);

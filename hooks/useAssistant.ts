@@ -14,7 +14,7 @@ import {
   isConversationSubstantial,
   synthesizeToEntry,
 } from '../services/assistantService';
-import { AssistantState, Conversation } from '../types';
+import { AssistantState, Conversation, JournalEntry } from '../types';
 
 interface UseAssistantReturn {
   state: AssistantState;
@@ -29,7 +29,7 @@ interface UseAssistantReturn {
   stopListening: () => void;
   cancelListening: () => void;
   startNewConversation: () => void;
-  saveAsEntry: () => Promise<void>;
+  saveAsEntry: () => Promise<JournalEntry | undefined>;
   endConversation: () => void;
 }
 

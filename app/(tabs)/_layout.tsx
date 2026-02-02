@@ -18,7 +18,13 @@ const TabIcon = ({ icon, focused, label, isCenter }: TabIconProps) => (
     ) : (
       <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>{icon}</Text>
     )}
-    <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
+    <Text
+      style={[styles.tabLabel, focused && styles.tabLabelFocused]}
+      numberOfLines={1}
+      ellipsizeMode="tail"
+    >
+      {label}
+    </Text>
   </View>
 );
 
@@ -119,21 +125,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 4,
+    width: 64,
+    maxWidth: 64,
   },
   tabContainerCenter: {
     marginTop: -20,
+    width: 72,
+    maxWidth: 72,
   },
   tabIcon: {
     fontSize: 24,
     marginBottom: 4,
+    opacity: 0.7,
   },
   tabIconFocused: {
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.15 }],
+    opacity: 1,
   },
   tabLabel: {
     fontSize: 10,
     color: JonoTheme.colors.text.tertiary,
     fontWeight: '500',
+    textAlign: 'center',
+    width: '100%',
+    maxWidth: 60,
   },
   tabLabelFocused: {
     color: JonoTheme.colors.accent.primary,
@@ -147,11 +162,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    borderWidth: 3,
+    borderColor: 'transparent',
     ...JonoTheme.shadows.medium,
   },
   centerOrbFocused: {
     backgroundColor: JonoTheme.colors.accent.primary,
-    transform: [{ scale: 1.05 }],
+    transform: [{ scale: 1.08 }],
+    borderColor: JonoTheme.colors.accent.muted,
+    ...JonoTheme.shadows.strong,
   },
   centerOrbIcon: {
     fontSize: 24,
