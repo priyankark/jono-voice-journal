@@ -116,6 +116,13 @@ export default function TabLayout() {
           title: 'Trends',
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null, // Hide from tab bar - accessible from header
+          title: 'Settings',
+        }}
+      />
     </Tabs>
   );
 }

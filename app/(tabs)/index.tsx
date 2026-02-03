@@ -51,8 +51,18 @@ export default function HomeScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>{getTimeBasedGreeting()}</Text>
-        <Text style={styles.date}>{formatDate(today)}</Text>
+        <View style={styles.headerTop}>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.greeting}>{getTimeBasedGreeting()}</Text>
+            <Text style={styles.date}>{formatDate(today)}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push('/settings')}
+          >
+            <Text style={styles.settingsIcon}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Quick Actions */}
@@ -153,6 +163,21 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 24,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  settingsButton: {
+    padding: 8,
+    marginLeft: 16,
+  },
+  settingsIcon: {
+    fontSize: 24,
   },
   greeting: {
     fontSize: 32,

@@ -1,36 +1,36 @@
 {
   "expo": {
-    "name": "Interview Journal",
-    "slug": "interview-journal",
+    "name": "Jono",
+    "slug": "jono",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "interview-journal",
+    "scheme": "jono",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#f57c00"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.journal.interviews",
+      "bundleIdentifier": "com.myjono.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "This app needs microphone access to record interview audio.",
-        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to transcribe your recordings."
+        "NSMicrophoneUsageDescription": "Jono uses your microphone to capture voice notes and have reflective conversations. All voice recording happens locally on your device - your recordings are never uploaded to external servers. You control what stays and what gets deleted.",
+        "NSSpeechRecognitionUsageDescription": "Jono uses Apple's on-device speech recognition to transcribe your voice recordings into searchable text. This processing happens entirely on your iPhone using Apple Intelligence - your words never leave your device."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#f57c00"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.journal.interviews"
+      "package": "com.myjono.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -41,14 +41,14 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Interview Journal to access your microphone for recording."
+          "microphonePermission": "Jono needs microphone access to record your voice notes and conversations. All recordings stay on your device and are never uploaded without your permission."
         }
       ],
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow Interview Journal to use the microphone for voice recording.",
-          "speechRecognitionPermission": "Allow Interview Journal to use speech recognition to transcribe your recordings."
+          "microphonePermission": "Jono needs microphone access for voice recording. All audio is processed locally on your device.",
+          "speechRecognitionPermission": "Jono uses Apple's on-device speech recognition to transcribe your recordings. Your voice data is processed locally and never leaves your device."
         }
       ]
     ]
