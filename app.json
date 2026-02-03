@@ -17,8 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.myjono.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Jono uses your microphone to capture voice notes and have reflective conversations. All voice recording happens locally on your device - your recordings are never uploaded to external servers. You control what stays and what gets deleted.",
-        "NSSpeechRecognitionUsageDescription": "Jono uses Apple's on-device speech recognition to transcribe your voice recordings into searchable text. This processing happens entirely on your iPhone using Apple Intelligence - your words never leave your device."
+        "NSMicrophoneUsageDescription": "Jono needs microphone access for voice recording. All audio is processed locally on your device.",
+        "NSSpeechRecognitionUsageDescription": "Jono uses Apple's on-device speech recognition to transcribe your recordings. Your voice data is processed locally and never leaves your device.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -28,7 +29,8 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.myjono.app"
     },
@@ -51,6 +53,12 @@
           "speechRecognitionPermission": "Jono uses Apple's on-device speech recognition to transcribe your recordings. Your voice data is processed locally and never leaves your device."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "718dd14e-a7a1-4baf-b47b-cadbaa4b9bb8"
+      }
+    }
   }
 }
