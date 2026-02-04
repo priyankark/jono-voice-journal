@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Jono",
+    "name": "My Jono",
     "slug": "jono",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,10 +16,17 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.myjono.app",
+      "deploymentTarget": "18.1",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Jono needs microphone access for voice recording. All audio is processed locally on your device.",
         "NSSpeechRecognitionUsageDescription": "Jono uses Apple's on-device speech recognition to transcribe your recordings. Your voice data is processed locally and never leaves your device.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSPhotoLibraryUsageDescription": "Jono may access your photo library when you choose to attach images to your entries.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIRequiredDeviceCapabilities": [
+          "arm64",
+          "metal"
+        ],
+        "MinimumOSVersion": "18.1"
       }
     },
     "android": {

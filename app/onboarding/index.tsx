@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import {
   OnboardingContainer,
+  DeviceCompatibilityScreen,
   WelcomeScreen,
   TwoWaysScreen,
   MeetJonoScreen,
@@ -29,15 +30,31 @@ export default function OnboardingScreen() {
     requestSpeechPermission,
   } = useOnboarding();
 
-  // Determine button text based on permission state
+  const [isDeviceCompatible, setIsDeviceCompatible] = useState<boolean | null>(null);
+
+  const handleCompatibilityChecked = useCallback((compatible: boolean) => {
+    setIsDeviceCompatible(compatible);
+  }, []);
+
+  // Determine button text based on current step and state
   const getNextButtonTitle = () => {
-    if (currentStep === 5) {
+    if (currentStep === 0) {
+      // Device compatibility screen (first screen)
+      if (isDeviceCompatible === null) {
+        return 'Checking...';
+      }
+      if (!isDeviceCompatible) {
+        return 'Device Not Supported';
+      }
+      return 'Continue';
+    }
+    if (currentStep === 6) {
       // Microphone permission screen
       if (microphonePermission === 'undetermined') {
         return 'Continue';
       }
     }
-    if (currentStep === 6) {
+    if (currentStep === 7) {
       // Speech permission screen
       if (speechPermission === 'undetermined') {
         return 'Continue';
@@ -49,6 +66,9 @@ export default function OnboardingScreen() {
     return 'Continue';
   };
 
+  // Disable next button if device is not compatible (on step 0)
+  const isNextDisabled = currentStep === 0 && !isDeviceCompatible;
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <OnboardingContainer
@@ -59,9 +79,13 @@ export default function OnboardingScreen() {
         onSkip={skipOnboarding}
         onComplete={completeOnboarding}
         nextButtonTitle={getNextButtonTitle()}
-        showSkip={currentStep < totalSteps - 1}
+        showSkip={currentStep > 0 && currentStep < totalSteps - 1}
         showBack={currentStep > 0}
+        isNextDisabled={isNextDisabled}
       >
+        <DeviceCompatibilityScreen
+          onCompatibilityChecked={handleCompatibilityChecked}
+        />
         <WelcomeScreen />
         <TwoWaysScreen />
         <MeetJonoScreen />

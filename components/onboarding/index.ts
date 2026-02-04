@@ -2,6 +2,7 @@ export { OnboardingContainer } from './OnboardingContainer';
 export { OnboardingScreen } from './OnboardingScreen';
 export { OnboardingButton } from './OnboardingButton';
 export { OnboardingPagination } from './OnboardingPagination';
+export { DeviceCompatibilityScreen } from './DeviceCompatibilityScreen';
 export { WelcomeScreen } from './WelcomeScreen';
 export { TwoWaysScreen } from './TwoWaysScreen';
 export { MeetJonoScreen } from './MeetJonoScreen';
