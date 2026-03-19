@@ -1,7 +1,14 @@
 {
-  "name": "journal-app",
+  "name": "jono",
   "version": "1.0.0",
+  "description": "Voice-first, privacy-focused journaling app powered by Apple Intelligence",
   "main": "expo-router/entry",
+  "license": "MIT",
+  "homepage": "https://myjono.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/jono.git"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -44,5 +51,12 @@
     "babel-preset-expo": "^54.0.10",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "keywords": [
+    "journaling",
+    "voice",
+    "apple-intelligence",
+    "privacy",
+    "react-native",
+    "expo"
+  ]
 }
