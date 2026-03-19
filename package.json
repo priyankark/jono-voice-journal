@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Voice-first, privacy-focused journaling app powered by Apple Intelligence",
   "main": "expo-router/entry",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "homepage": "https://myjono.app",
   "repository": {
     "type": "git",
