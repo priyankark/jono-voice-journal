@@ -25,8 +25,8 @@ export const MicrophonePermissionScreen: React.FC<MicrophonePermissionScreenProp
       case 'granted':
         return {
           icon: '✅',
-          title: 'Microphone Access Enabled',
-          subtitle: 'You\'re all set to record voice notes',
+          title: "You're All Set",
+          subtitle: 'You can record voice notes and have conversations with Jono',
         };
       case 'denied':
         return {
@@ -37,7 +37,7 @@ export const MicrophonePermissionScreen: React.FC<MicrophonePermissionScreenProp
       default:
         return {
           icon: '🎙️',
-          title: 'Enable Microphone Access',
+          title: 'Microphone Access',
           subtitle: 'Required to record voice notes and have conversations with Jono',
         };
     }
@@ -72,7 +72,7 @@ export const MicrophonePermissionScreen: React.FC<MicrophonePermissionScreenProp
         {permissionStatus === 'undetermined' && (
           <View style={styles.buttonContainer}>
             <OnboardingButton
-              title="Enable Microphone"
+              title="Continue"
               onPress={onRequestPermission}
               variant="secondary"
             />

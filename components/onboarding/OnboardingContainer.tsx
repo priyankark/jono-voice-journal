@@ -31,6 +31,7 @@ interface OnboardingContainerProps {
   nextButtonTitle?: string;
   showSkip?: boolean;
   showBack?: boolean;
+  showFooter?: boolean;
   isNextDisabled?: boolean;
   isNextLoading?: boolean;
 }
@@ -46,6 +47,7 @@ export const OnboardingContainer: React.FC<OnboardingContainerProps> = ({
   nextButtonTitle,
   showSkip = true,
   showBack = true,
+  showFooter = true,
   isNextDisabled = false,
   isNextLoading = false,
 }) => {
@@ -118,16 +120,18 @@ export const OnboardingContainer: React.FC<OnboardingContainerProps> = ({
         </View>
       </GestureDetector>
 
-      {/* Footer with Button */}
-      <View style={styles.footer}>
-        <OnboardingButton
-          title={buttonTitle}
-          onPress={handleButtonPress}
-          disabled={isNextDisabled}
-          loading={isNextLoading}
-          style={styles.button}
-        />
-      </View>
+      {/* Footer with Button - hidden on permission screens until user has responded */}
+      {showFooter && (
+        <View style={styles.footer}>
+          <OnboardingButton
+            title={buttonTitle}
+            onPress={handleButtonPress}
+            disabled={isNextDisabled}
+            loading={isNextLoading}
+            style={styles.button}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };

@@ -7,8 +7,10 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { apple } from '@react-native-ai/apple';
 import { JonoTheme } from '../../constants/theme';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useTeachingStore } from '../../stores/teachingStore';
@@ -17,6 +19,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { resetOnboarding } = useOnboardingStore();
   const { resetTips } = useTeachingStore();
+  const isAppleIntelligenceAvailable = apple.isAvailable();
 
   const handleReplayTutorial = () => {
     Alert.alert(
@@ -87,6 +90,21 @@ export default function SettingsScreen() {
             <Text style={styles.aboutLabel}>Version</Text>
             <Text style={styles.aboutValue}>1.0.0</Text>
           </View>
+          <View style={styles.separator} />
+          <View style={styles.aboutItem}>
+            <Text style={styles.aboutLabel}>Apple Intelligence</Text>
+            <Text style={[
+              styles.aboutValue,
+              isAppleIntelligenceAvailable ? styles.statusEnabled : styles.statusDisabled
+            ]}>
+              {isAppleIntelligenceAvailable ? 'Enabled' : 'Not Available'}
+            </Text>
+          </View>
+          {!isAppleIntelligenceAvailable && (
+            <Text style={styles.aiHint}>
+              Jono works best with Apple Intelligence enabled for smarter conversations and insights.
+            </Text>
+          )}
           <View style={styles.separator} />
           <View style={styles.aboutItem}>
             <Text style={styles.aboutLabel}>Made with</Text>
@@ -201,6 +219,18 @@ const styles = StyleSheet.create({
   aboutValue: {
     ...JonoTheme.typography.body,
     color: JonoTheme.colors.text.secondary,
+  },
+  statusEnabled: {
+    color: JonoTheme.colors.sentiment.positive,
+  },
+  statusDisabled: {
+    color: JonoTheme.colors.text.tertiary,
+  },
+  aiHint: {
+    ...JonoTheme.typography.caption1,
+    color: JonoTheme.colors.text.tertiary,
+    paddingHorizontal: JonoTheme.spacing.md,
+    paddingBottom: JonoTheme.spacing.sm,
   },
   privacyNote: {
     flexDirection: 'row',

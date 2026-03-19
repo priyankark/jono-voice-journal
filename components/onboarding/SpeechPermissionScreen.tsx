@@ -25,7 +25,7 @@ export const SpeechPermissionScreen: React.FC<SpeechPermissionScreenProps> = ({
       case 'granted':
         return {
           icon: '✅',
-          title: 'Speech Recognition Enabled',
+          title: "You're All Set",
           subtitle: 'Your voice will be transcribed into searchable text',
         };
       case 'denied':
@@ -37,7 +37,7 @@ export const SpeechPermissionScreen: React.FC<SpeechPermissionScreenProps> = ({
       default:
         return {
           icon: '🗣️',
-          title: 'Enable Speech Recognition',
+          title: 'Speech Recognition',
           subtitle: 'Converts your voice into searchable text using Apple Intelligence',
         };
     }
@@ -78,7 +78,7 @@ export const SpeechPermissionScreen: React.FC<SpeechPermissionScreenProps> = ({
         {permissionStatus === 'undetermined' && (
           <View style={styles.buttonContainer}>
             <OnboardingButton
-              title="Enable Speech Recognition"
+              title="Continue"
               onPress={onRequestPermission}
               variant="secondary"
             />

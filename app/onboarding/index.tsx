@@ -39,13 +39,12 @@ export default function OnboardingScreen() {
   // Determine button text based on current step and state
   const getNextButtonTitle = () => {
     if (currentStep === 0) {
-      // Device compatibility screen (first screen)
+      // Device compatibility screen - show checking while checking, then let component handle button
       if (isDeviceCompatible === null) {
         return 'Checking...';
       }
-      if (!isDeviceCompatible) {
-        return 'Device Not Supported';
-      }
+      // If compatible, show Continue (handled by container)
+      // If not compatible, the screen shows its own button
       return 'Continue';
     }
     if (currentStep === 6) {
@@ -66,8 +65,14 @@ export default function OnboardingScreen() {
     return 'Continue';
   };
 
-  // Disable next button if device is not compatible (on step 0)
-  const isNextDisabled = currentStep === 0 && !isDeviceCompatible;
+  // Only disable while checking compatibility
+  const isNextDisabled = currentStep === 0 && isDeviceCompatible === null;
+
+  // Hide footer on permission screens when permission not yet requested - only the in-screen "Continue" (which triggers the system dialog) should show
+  const isPermissionScreenPending =
+    (currentStep === 6 && microphonePermission === 'undetermined') ||
+    (currentStep === 7 && speechPermission === 'undetermined');
+  const showFooter = !isPermissionScreenPending;
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -81,10 +86,12 @@ export default function OnboardingScreen() {
         nextButtonTitle={getNextButtonTitle()}
         showSkip={currentStep > 0 && currentStep < totalSteps - 1}
         showBack={currentStep > 0}
+        showFooter={showFooter}
         isNextDisabled={isNextDisabled}
       >
         <DeviceCompatibilityScreen
           onCompatibilityChecked={handleCompatibilityChecked}
+          onContinue={nextStep}
         />
         <WelcomeScreen />
         <TwoWaysScreen />

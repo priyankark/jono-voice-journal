@@ -53,7 +53,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress, onDistill 
         <View style={styles.tags}>
           {entry.tags.slice(0, 3).map((tag, index) => (
             <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
+              <Text style={styles.tagText} numberOfLines={1}>{tag}</Text>
             </View>
           ))}
         </View>
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   },
   tags: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 10,
   },
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: JonoTheme.borderRadius.full,
+    maxWidth: 120,
   },
   tagText: {
     fontSize: 12,

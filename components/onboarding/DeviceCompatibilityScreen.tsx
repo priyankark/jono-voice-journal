@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Linking } from 'react-native';
+import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { apple } from '@react-native-ai/apple';
 import { OnboardingScreen } from './OnboardingScreen';
 import { JonoTheme } from '../../constants/theme';
 
 interface DeviceCompatibilityScreenProps {
   onCompatibilityChecked: (isCompatible: boolean) => void;
+  onContinue: () => void;
 }
 
 export const DeviceCompatibilityScreen: React.FC<DeviceCompatibilityScreenProps> = ({
   onCompatibilityChecked,
+  onContinue,
 }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isCompatible, setIsCompatible] = useState(false);
@@ -85,24 +87,28 @@ export const DeviceCompatibilityScreen: React.FC<DeviceCompatibilityScreenProps>
 
   return (
     <OnboardingScreen
-      title="Device Not Compatible"
-      subtitle="Jono requires Apple Intelligence, which isn't available on this device"
+      title="Enhanced Experience Available"
+      subtitle="Jono works best with Apple Intelligence enabled for on-device AI processing"
       illustration={
         <View style={styles.iconContainer}>
-          <Text style={styles.iconError}>!</Text>
+          <Text style={styles.iconInfo}>ℹ</Text>
         </View>
       }
     >
       <View style={styles.incompatibleContainer}>
-        <Text style={styles.requirementsTitle}>Requirements:</Text>
+        <Text style={styles.requirementsTitle}>For the best experience:</Text>
         <Text style={styles.requirementItem}>• iPhone 15 Pro, 15 Pro Max, or iPhone 16+</Text>
         <Text style={styles.requirementItem}>• iPad with M1 chip or later</Text>
-        <Text style={styles.requirementItem}>• iOS 18.1 or later</Text>
+        <Text style={styles.requirementItem}>• iOS 18.1 or later with Apple Intelligence enabled</Text>
 
         <Text style={styles.learnMoreText} onPress={openSupportPage}>
-          Learn more about compatible devices
+          Learn more about Apple Intelligence
         </Text>
       </View>
+
+      <TouchableOpacity style={styles.continueButton} onPress={onContinue}>
+        <Text style={styles.continueButtonText}>Continue</Text>
+      </TouchableOpacity>
     </OnboardingScreen>
   );
 };
@@ -134,11 +140,15 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 48,
-    color: JonoTheme.colors.primary,
+    color: JonoTheme.colors.accent.primary,
   },
   iconError: {
     fontSize: 48,
-    color: JonoTheme.colors.status.error,
+    color: JonoTheme.colors.sentiment.negative,
+  },
+  iconInfo: {
+    fontSize: 48,
+    color: JonoTheme.colors.accent.primary,
   },
   compatibleContainer: {
     width: '100%',
@@ -164,7 +174,7 @@ const styles = StyleSheet.create({
   },
   learnMoreText: {
     ...JonoTheme.typography.body,
-    color: JonoTheme.colors.primary,
+    color: JonoTheme.colors.accent.primary,
     marginTop: JonoTheme.spacing.lg,
     textDecorationLine: 'underline',
   },
@@ -187,7 +197,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   infoValuePositive: {
-    color: JonoTheme.colors.status.success,
+    color: JonoTheme.colors.sentiment.positive,
+  },
+  continueButton: {
+    backgroundColor: JonoTheme.colors.accent.primary,
+    paddingVertical: JonoTheme.spacing.md,
+    paddingHorizontal: JonoTheme.spacing.xl,
+    borderRadius: JonoTheme.borderRadius.lg,
+    marginTop: JonoTheme.spacing.xl,
+    alignSelf: 'center',
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    ...JonoTheme.typography.headline,
+    color: JonoTheme.colors.text.inverse,
   },
 });
 

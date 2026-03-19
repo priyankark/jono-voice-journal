@@ -656,7 +656,7 @@ const generateArticleFallback = (
       : `Interview Notes - ${new Date().toLocaleDateString()}`;
 
   const summary = isCustomPrompt
-    ? `This content was generated from ${entries.length} entries using a custom prompt. AI generation was not available, showing raw content.`
+    ? `This content was generated from ${entries.length} entries using a custom prompt.`
     : `This article synthesizes insights from ${entries.length} interview${entries.length > 1 ? 's' : ''} ` +
       `${interviewees.length > 0 ? `with ${interviewees.join(', ')}` : ''}. ` +
       `Key themes and quotes have been extracted for easy reference.`;
@@ -854,7 +854,17 @@ export const streamArticleGeneration = async (
   options: Partial<ArticleGenerationOptions> = {}
 ): Promise<void> => {
   if (!apple.isAvailable()) {
-    throw new Error('Apple Intelligence is not available on this device.');
+    // Graceful fallback: generate content without streaming
+    const rawContent = entries.map(combineEntryContent).join('\n---\n');
+    const fallbackContent = formatAsArticle(rawContent);
+
+    // Simulate streaming by sending chunks
+    const words = fallbackContent.split(' ');
+    for (const word of words) {
+      onChunk(word + ' ');
+      await new Promise(resolve => setTimeout(resolve, 20)); // Small delay for visual effect
+    }
+    return;
   }
 
   const opts = { ...DEFAULT_OPTIONS, ...options };

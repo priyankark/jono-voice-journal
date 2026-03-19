@@ -68,7 +68,8 @@ export const generateFollowUp = async (conversation: Conversation): Promise<stri
   }
 
   if (!apple.isAvailable()) {
-    throw new Error('Apple Intelligence is not available on this device.');
+    // Graceful fallback with helpful messaging
+    return generateFollowUpFallback(conversation);
   }
 
   const messages = conversation.messages
@@ -84,13 +85,47 @@ export const generateFollowUp = async (conversation: Conversation): Promise<stri
     });
 
     if (!text?.trim()) {
-      throw new Error('Empty response');
+      return generateFollowUpFallback(conversation);
     }
     return text.trim();
   } catch (error: any) {
     console.error('AI generation failed:', error);
-    throw new Error('Failed to generate response. Please try again.');
+    return generateFollowUpFallback(conversation);
   }
+};
+
+// Fallback responses when Apple Intelligence is not available
+const generateFollowUpFallback = (conversation: Conversation): string => {
+  const userMessages = conversation.messages.filter((m) => m.role === 'user');
+  const messageCount = userMessages.length;
+
+  // Early conversation - opening prompts
+  if (messageCount <= 1) {
+    const earlyPrompts = [
+      "Tell me more about that.",
+      "What else comes to mind?",
+      "Go on...",
+    ];
+    return earlyPrompts[messageCount % earlyPrompts.length];
+  }
+
+  // Mid conversation - deeper prompts
+  if (messageCount <= 3) {
+    const midPrompts = [
+      "How does that make you feel?",
+      "What do you think led to that?",
+      "Is there more to this?",
+    ];
+    return midPrompts[messageCount % midPrompts.length];
+  }
+
+  // Longer conversation - reflective prompts
+  const latePrompts = [
+    "What stands out most from everything you've shared?",
+    "If you had to sum this up, what would you say?",
+    "What's the heart of this for you?",
+  ];
+  return latePrompts[messageCount % latePrompts.length];
 };
 
 // === Summary & Tags ===
