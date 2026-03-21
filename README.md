@@ -67,8 +67,8 @@ Jono is an AI journaling companion that turns scattered thoughts into deep perso
 
 ```bash
 # Clone the repository
-git clone https://github.com/user/jono.git
-cd jono
+git clone https://github.com/priyankark/jono-voice-journal.git
+cd jono-voice-journal
 
 # Install dependencies
 npm install
