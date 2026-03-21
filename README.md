@@ -171,7 +171,7 @@ See our full [Privacy Policy](app-store/PRIVACY_POLICY.md).
 
 ## License
 
-This project is licensed under the [PolyForm Noncommercial 1.0.0](LICENSE) license. You're free to use, modify, and share Jono for any non-commercial purpose. Commercial use requires permission from the maintainers.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgments
 
