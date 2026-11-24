@@ -27,7 +27,8 @@
           "metal"
         ],
         "MinimumOSVersion": "18.1"
-      }
+      },
+      "buildNumber": "2026112301"
     },
     "android": {
       "adaptiveIcon": {
@@ -59,7 +60,8 @@
           "microphonePermission": "Jono needs microphone access for voice recording. All audio is processed locally on your device.",
           "speechRecognitionPermission": "Jono uses Apple's on-device speech recognition to transcribe your recordings. Your voice data is processed locally and never leaves your device."
         }
-      ]
+      ],
+      "./plugins/withSingleWindowScene.cjs"
     ],
     "extra": {
       "router": {},

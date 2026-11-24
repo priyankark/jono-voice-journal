@@ -1,0 +1,34 @@
+{
+  "purpose": "Publish replacement Vercel website/support/privacy URLs with the next iOS version",
+  "sourceBaseline": "4629035",
+  "version": "1.0.1",
+  "changes": [
+    "Version/build bump",
+    "Single-window scene lifecycle required for builds using iOS 27 SDK"
+  ],
+  "toolchain": "Xcode 27.2 (27B52)",
+  "status": "candidate; not uploaded or submitted",
+  "storeUrlEvidence": "../../apple-draft-migration-results.json",
+  "appleAppId": "6758651923",
+  "releaseNotes": "Updated website, support, and privacy policy links, plus compatibility improvements for current iOS versions.",
+  "build": "2026112301",
+  "validationEvidence": "../jono-smoke.json",
+  "lockfileRepair": {
+    "existingPackageVersionChanges": [],
+    "addedEntries": [
+      "node_modules/lightningcss-android-arm64",
+      "node_modules/lightningcss-darwin-x64",
+      "node_modules/lightningcss-freebsd-x64",
+      "node_modules/lightningcss-linux-arm-gnueabihf",
+      "node_modules/lightningcss-linux-arm64-gnu",
+      "node_modules/lightningcss-linux-arm64-musl",
+      "node_modules/lightningcss-linux-x64-gnu",
+      "node_modules/lightningcss-linux-x64-musl",
+      "node_modules/lightningcss-win32-arm64-msvc",
+      "node_modules/lightningcss-win32-x64-msvc"
+    ],
+    "removedEntries": [],
+    "removedEntriesWerePeerOnly": true,
+    "reason": "Repair stale lockfile for dependency installation with current npm; Sensor uses legacy-peer-deps."
+  }
+}
